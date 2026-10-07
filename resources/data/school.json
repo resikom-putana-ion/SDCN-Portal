@@ -1,0 +1,1339 @@
+{
+  "menus": [
+    [
+      "Beranda",
+      "Overview",
+      "grid",
+      "",
+      []
+    ],
+    [
+      "Penerimaan siswa",
+      "Admissions",
+      "file",
+      "admissions",
+      [
+        [
+          "Pendaftar online",
+          "Online applicants",
+          "pendaftar"
+        ],
+        [
+          "Daftar ulang offline",
+          "Offline re-enrolment",
+          "daftar-ulang"
+        ],
+        [
+          "Periode & kuota",
+          "Period & capacity",
+          "periode"
+        ]
+      ]
+    ],
+    [
+      "Data sekolah",
+      "School data",
+      "users",
+      "school",
+      [
+        [
+          "Siswa & keluarga",
+          "Students & families",
+          "siswa"
+        ],
+        [
+          "Guru & staf",
+          "Teachers & staff",
+          "guru"
+        ],
+        [
+          "Kelas & tahun ajaran",
+          "Classes & school years",
+          "kelas"
+        ]
+      ]
+    ],
+    [
+      "Akademik",
+      "Academics",
+      "book",
+      "academic",
+      [
+        [
+          "Absensi siswa",
+          "Attendance",
+          "absensi"
+        ],
+        [
+          "Nilai & rapor",
+          "Grades & report cards",
+          "nilai"
+        ]
+      ]
+    ],
+    [
+      "Keuangan",
+      "Finance",
+      "wallet",
+      "finance",
+      [
+        [
+          "Tagihan sekolah",
+          "School invoices",
+          "tagihan"
+        ],
+        [
+          "Pembayaran",
+          "Payments",
+          "pembayaran"
+        ],
+        [
+          "Kas & transaksi",
+          "Cash & transactions",
+          "kas"
+        ]
+      ]
+    ],
+    [
+      "Website sekolah",
+      "School website",
+      "globe",
+      "website",
+      [
+        [
+          "Ringkasan website",
+          "Website overview",
+          "website"
+        ],
+        [
+          "Halaman & bagian",
+          "Pages & sections",
+          "halaman"
+        ],
+        [
+          "Informasi PPDB",
+          "Admissions information",
+          "website/ppdb/edit"
+        ],
+        [
+          "Berita & galeri",
+          "News & gallery",
+          "berita"
+        ],
+        [
+          "Media",
+          "Media",
+          "media"
+        ],
+        [
+          "Tinjauan & publikasi",
+          "Review & publish",
+          "publikasi"
+        ]
+      ]
+    ],
+    [
+      "Informasi & agenda",
+      "News & calendar",
+      "bell",
+      "information",
+      [
+        [
+          "Pengumuman",
+          "Announcements",
+          "pengumuman"
+        ],
+        [
+          "Kalender & agenda",
+          "Calendar & events",
+          "agenda"
+        ]
+      ]
+    ],
+    [
+      "Laporan",
+      "Reports",
+      "chart",
+      "reports",
+      [
+        [
+          "Laporan sekolah",
+          "School reports",
+          "laporan"
+        ]
+      ]
+    ],
+    [
+      "Pengaturan",
+      "Settings",
+      "settings",
+      "settings",
+      [
+        [
+          "Profil & keamanan",
+          "School & security",
+          "pengaturan"
+        ],
+        [
+          "Pengguna & izin",
+          "Users & permissions",
+          "pengguna"
+        ],
+        [
+          "Riwayat aktivitas",
+          "Activity history",
+          "aktivitas"
+        ],
+        [
+          "Alat sekolah",
+          "School tools",
+          "alat"
+        ]
+      ]
+    ]
+  ],
+  "pages": {
+    "siswa": [
+      "Siswa & Keluarga",
+      "school",
+      "students",
+      {
+        "name": "Nama siswa",
+        "nis": "NIS",
+        "class": "Kelas",
+        "guardian": "Orang tua / wali",
+        "status": "Status"
+      },
+      "Tambah siswa"
+    ],
+    "guru": [
+      "Guru & Staf",
+      "school",
+      "staff",
+      {
+        "name": "Nama",
+        "employee_id": "ID",
+        "position": "Jabatan",
+        "assignment": "Penugasan",
+        "status": "Status"
+      },
+      "Tambah guru / staf"
+    ],
+    "pendaftar": [
+      "Pendaftar Online",
+      "admissions",
+      "applicants",
+      {
+        "name": "Calon siswa",
+        "number": "Nomor daftar",
+        "date": "Tanggal",
+        "guardian": "Wali",
+        "status": "Status"
+      },
+      ""
+    ],
+    "daftar-ulang": [
+      "Daftar Ulang Offline",
+      "admissions",
+      "applicants",
+      {
+        "name": "Calon siswa",
+        "number": "Nomor daftar",
+        "appointment": "Jadwal datang",
+        "payment": "Pembayaran",
+        "status": "Status"
+      },
+      ""
+    ],
+    "kelas": [
+      "Kelas & Tahun Ajaran",
+      "school",
+      "classes",
+      {
+        "name": "Kelas",
+        "level": "Tingkat",
+        "teacher": "Wali kelas",
+        "count": "Jumlah siswa",
+        "status": "Status"
+      },
+      "Kenaikan kelas"
+    ],
+    "absensi": [
+      "Absensi Siswa",
+      "academic",
+      "attendance",
+      {
+        "name": "Siswa",
+        "class": "Kelas",
+        "notes": "Catatan",
+        "author": "Petugas",
+        "status": "Kehadiran"
+      },
+      "Isi absensi"
+    ],
+    "nilai": [
+      "Nilai & Rapor",
+      "academic",
+      "grades",
+      {
+        "name": "Siswa",
+        "class": "Kelas",
+        "subject": "Mata pelajaran",
+        "score": "Nilai",
+        "status": "Status"
+      },
+      "Periksa rapor"
+    ],
+    "tagihan": [
+      "Tagihan Sekolah",
+      "finance",
+      "invoices",
+      {
+        "name": "Tagihan / siswa",
+        "class": "Kelas",
+        "amount": "Nominal",
+        "balance": "Sisa",
+        "status": "Status"
+      },
+      "Buat tagihan"
+    ],
+    "kas": [
+      "Kas & Transaksi",
+      "finance",
+      "transactions",
+      {
+        "name": "Transaksi",
+        "type": "Jenis",
+        "amount": "Nominal",
+        "method": "Metode",
+        "status": "Status"
+      },
+      "Catat transaksi"
+    ],
+    "pengumuman": [
+      "Pengumuman",
+      "information",
+      "announcements",
+      {
+        "name": "Judul",
+        "audience": "Penerima",
+        "date": "Tanggal",
+        "author": "Penulis",
+        "status": "Status"
+      },
+      "Buat pengumuman"
+    ],
+    "agenda": [
+      "Kalender & Agenda",
+      "information",
+      "events",
+      {
+        "date": "Tanggal",
+        "name": "Kegiatan",
+        "audience": "Sasaran",
+        "location": "Lokasi"
+      },
+      "Tambah agenda"
+    ],
+    "berita": [
+      "Berita & Galeri",
+      "website",
+      "news",
+      {
+        "name": "Judul konten",
+        "type": "Jenis",
+        "author": "Penulis",
+        "date": "Tanggal",
+        "status": "Status"
+      },
+      "Tambah berita"
+    ],
+    "aktivitas": [
+      "Riwayat Aktivitas",
+      "settings",
+      "activities",
+      {
+        "date": "Waktu",
+        "author": "Petugas",
+        "name": "Tindakan",
+        "section": "Bagian",
+        "status": "Hasil"
+      },
+      ""
+    ],
+    "alat": [
+      "Alat Sekolah",
+      "settings",
+      "tools",
+      {
+        "name": "Fitur",
+        "purpose": "Kegunaan",
+        "proposal": "Usulan tahap",
+        "status": "Keputusan"
+      },
+      ""
+    ]
+  },
+  "forms": {
+    "students": [
+      {
+        "name": "name",
+        "label": "Nama siswa",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "nis",
+        "label": "Nomor induk",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "class",
+        "label": "Kelas",
+        "value": "1A",
+        "type": "select",
+        "options": [
+          "1A",
+          "1B",
+          "2A",
+          "2B",
+          "3A",
+          "3B",
+          "4A",
+          "4B",
+          "5A",
+          "5B",
+          "6A",
+          "6B"
+        ]
+      },
+      {
+        "name": "birth_date",
+        "label": "Tanggal lahir",
+        "value": "2020-02-12",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "guardian",
+        "label": "Wali utama",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "phone",
+        "label": "Telepon wali",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "gender",
+        "label": "Jenis kelamin",
+        "value": "Perempuan",
+        "type": "select",
+        "options": [
+          "Perempuan",
+          "Laki-laki"
+        ]
+      },
+      {
+        "name": "email",
+        "label": "Email wali",
+        "value": "",
+        "type": "email",
+        "options": []
+      },
+      {
+        "name": "year",
+        "label": "Tahun ajaran",
+        "value": "2026/2027",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "address",
+        "label": "Alamat keluarga",
+        "value": "Jl. Pelangi Imajiner No. 15, Kota Imajinaria",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "previous_school",
+        "label": "Sekolah sebelumnya",
+        "value": "TK Pelangi Ceria",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "father",
+        "label": "Nama ayah",
+        "value": "",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "staff": [
+      {
+        "name": "name",
+        "label": "Nama",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "employee_id",
+        "label": "ID pegawai",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "position",
+        "label": "Jabatan",
+        "value": "Guru kelas",
+        "type": "select",
+        "options": [
+          "Guru kelas",
+          "Guru mata pelajaran",
+          "Tata Usaha",
+          "Kepala Sekolah"
+        ]
+      },
+      {
+        "name": "assignment",
+        "label": "Penugasan",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "education",
+        "label": "Pendidikan",
+        "value": "S1 PGSD",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "phone",
+        "label": "Telepon",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "email",
+        "label": "Email",
+        "value": "",
+        "type": "email",
+        "options": []
+      },
+      {
+        "name": "gender",
+        "label": "Jenis kelamin",
+        "value": "Perempuan",
+        "type": "select",
+        "options": [
+          "Perempuan",
+          "Laki-laki"
+        ]
+      },
+      {
+        "name": "birth_date",
+        "label": "Tanggal lahir",
+        "value": "1992-04-18",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "joined",
+        "label": "Tanggal bergabung",
+        "value": "2019-07-15",
+        "type": "date",
+        "options": []
+      }
+    ],
+    "period": [
+      {
+        "name": "year",
+        "label": "Tahun ajaran penerimaan",
+        "value": "2027/2028",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "period",
+        "label": "Periode pendaftaran",
+        "value": "Oktober 2026–Mei 2027",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "age",
+        "label": "Usia masuk",
+        "value": "6–7 tahun pada Juli 2027",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "capacity",
+        "label": "Kuota kelas 1",
+        "value": "60",
+        "type": "number",
+        "options": []
+      },
+      {
+        "name": "fee",
+        "label": "Biaya pendaftaran",
+        "value": "250000",
+        "type": "number",
+        "options": []
+      },
+      {
+        "name": "reenrollment",
+        "label": "Daftar ulang",
+        "value": "Offline di sekolah setelah lolos administrasi",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "invoices": [
+      {
+        "name": "name",
+        "label": "Jenis biaya",
+        "value": "SPP",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "period",
+        "label": "Periode",
+        "value": "Oktober 2026",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "student_id",
+        "label": "Siswa",
+        "value": "",
+        "type": "student",
+        "options": []
+      },
+      {
+        "name": "amount",
+        "label": "Nominal",
+        "value": "300000",
+        "type": "number",
+        "options": []
+      },
+      {
+        "name": "due_date",
+        "label": "Jatuh tempo",
+        "value": "2026-10-10",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "notes",
+        "label": "Catatan",
+        "value": "SPP bulanan — nominal contoh",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "transactions": [
+      {
+        "name": "type",
+        "label": "Jenis transaksi",
+        "value": "Pengeluaran",
+        "type": "select",
+        "options": [
+          "Pemasukan",
+          "Pengeluaran"
+        ]
+      },
+      {
+        "name": "category",
+        "label": "Kategori",
+        "value": "Kegiatan pembelajaran",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "amount",
+        "label": "Nominal",
+        "value": "450000",
+        "type": "number",
+        "options": []
+      },
+      {
+        "name": "date",
+        "label": "Tanggal",
+        "value": "2026-10-05",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "method",
+        "label": "Metode",
+        "value": "Transfer",
+        "type": "select",
+        "options": [
+          "Tunai",
+          "Transfer"
+        ]
+      },
+      {
+        "name": "name",
+        "label": "Catatan",
+        "value": "Alat kegiatan literasi",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "announcements": [
+      {
+        "name": "name",
+        "label": "Judul",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "audience",
+        "label": "Penerima",
+        "value": "Seluruh warga sekolah",
+        "type": "select",
+        "options": [
+          "Seluruh warga sekolah",
+          "Orang tua / wali",
+          "Guru & staf",
+          "Siswa"
+        ]
+      },
+      {
+        "name": "date",
+        "label": "Tanggal",
+        "value": "2026-10-08",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "body",
+        "label": "Isi pengumuman",
+        "value": "",
+        "type": "textarea",
+        "options": []
+      }
+    ],
+    "news": [
+      {
+        "name": "name",
+        "label": "Judul berita",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "date",
+        "label": "Tanggal kegiatan",
+        "value": "2026-10-08",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "summary",
+        "label": "Ringkasan",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "body",
+        "label": "Isi berita",
+        "value": "",
+        "type": "textarea",
+        "options": []
+      },
+      {
+        "name": "image",
+        "label": "Gambar utama",
+        "value": "classroom.jpeg",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "type",
+        "label": "Jenis",
+        "value": "Berita",
+        "type": "select",
+        "options": [
+          "Berita",
+          "Galeri",
+          "Informasi"
+        ]
+      }
+    ],
+    "settings": [
+      {
+        "name": "name",
+        "label": "Nama sekolah",
+        "value": "SD Ceria Nusantara",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "founded",
+        "label": "Tahun berdiri",
+        "value": "2014",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "accreditation",
+        "label": "Akreditasi",
+        "value": "A",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "email",
+        "label": "Email sekolah",
+        "value": "sdcerianusantara@dumy.com",
+        "type": "email",
+        "options": []
+      },
+      {
+        "name": "phone",
+        "label": "Kontak WhatsApp",
+        "value": "+6281234567890",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "hours",
+        "label": "Jam layanan",
+        "value": "Senin–Jumat · 07.00–15.00 WIB",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "address",
+        "label": "Alamat",
+        "value": "Jl. Pelangi Imajiner No. 12, Kel. Awan Ceria, Kota Imajinaria",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "year",
+        "label": "Tahun ajaran aktif",
+        "value": "2026/2027",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "attendance": [
+      {
+        "name": "student_id",
+        "label": "Siswa",
+        "value": "",
+        "type": "student",
+        "options": []
+      },
+      {
+        "name": "date",
+        "label": "Tanggal",
+        "value": "2026-10-05",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "status",
+        "label": "Kehadiran",
+        "value": "Hadir",
+        "type": "select",
+        "options": [
+          "Hadir",
+          "Izin",
+          "Sakit",
+          "Alpa"
+        ]
+      },
+      {
+        "name": "notes",
+        "label": "Catatan",
+        "value": "Tepat waktu",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "grades": [
+      {
+        "name": "student_id",
+        "label": "Siswa",
+        "value": "",
+        "type": "student",
+        "options": []
+      },
+      {
+        "name": "subject",
+        "label": "Mata pelajaran",
+        "value": "Bahasa Indonesia",
+        "type": "select",
+        "options": [
+          "Bahasa Indonesia",
+          "Matematika",
+          "Pendidikan Pancasila",
+          "Seni & kreativitas"
+        ]
+      },
+      {
+        "name": "semester",
+        "label": "Semester",
+        "value": "Ganjil 2026/27",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "score",
+        "label": "Nilai",
+        "value": "88",
+        "type": "number",
+        "options": []
+      },
+      {
+        "name": "notes",
+        "label": "Perkembangan & catatan wali kelas",
+        "value": "",
+        "type": "textarea",
+        "options": []
+      },
+      {
+        "name": "status",
+        "label": "Status",
+        "value": "Pemeriksaan",
+        "type": "select",
+        "options": [
+          "Pemeriksaan",
+          "Terbit"
+        ]
+      }
+    ],
+    "events": [
+      {
+        "name": "name",
+        "label": "Kegiatan",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "date",
+        "label": "Tanggal",
+        "value": "2026-10-08",
+        "type": "date",
+        "options": []
+      },
+      {
+        "name": "time",
+        "label": "Waktu",
+        "value": "09:00",
+        "type": "time",
+        "options": []
+      },
+      {
+        "name": "audience",
+        "label": "Sasaran",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "location",
+        "label": "Lokasi",
+        "value": "",
+        "type": "text",
+        "options": []
+      }
+    ],
+    "classes": [
+      {
+        "name": "name",
+        "label": "Kelas",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "level",
+        "label": "Tingkat",
+        "value": "Kelas 1",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "teacher",
+        "label": "Wali kelas",
+        "value": "",
+        "type": "text",
+        "options": []
+      },
+      {
+        "name": "year",
+        "label": "Tahun ajaran",
+        "value": "2026/2027",
+        "type": "text",
+        "options": []
+      }
+    ]
+  },
+  "sections": {
+    "hero": {
+      "title": "Edit Hero Landing Page",
+      "name": "Hero / Beranda",
+      "heading": "Konten Hero",
+      "fields": [
+        {
+          "name": "eyebrow",
+          "label": "Label pembuka",
+          "value": "TUMBUH CERIA SETIAP HARI",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "title",
+          "label": "Judul utama",
+          "value": "Belajar Ceria, Tumbuh Percaya Diri",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "description",
+          "label": "Deskripsi",
+          "value": "Ruang belajar yang hangat untuk anak mengeksplorasi, bertanya, dan menemukan potensi terbaiknya.",
+          "type": "textarea",
+          "options": []
+        },
+        {
+          "name": "button",
+          "label": "Tombol utama",
+          "value": "Daftar Sekarang",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "target",
+          "label": "Tujuan tombol utama",
+          "value": "Formulir PPDB online",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "secondary",
+          "label": "Tombol kedua",
+          "value": "Lihat Profil Sekolah",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "image",
+          "label": "Gambar hero",
+          "value": "classroom.jpeg",
+          "type": "text",
+          "options": []
+        }
+      ]
+    },
+    "profil": {
+      "title": "Profil Sekolah",
+      "name": "Profil Sekolah",
+      "heading": "Isi profil sekolah",
+      "fields": [
+        {
+          "name": "title",
+          "label": "Judul profil",
+          "value": "Selamat datang di SD Ceria Nusantara",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "description",
+          "label": "Deskripsi",
+          "value": "Tempat anak merasa diterima, berani mencoba, dan senang belajar.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "founded",
+          "label": "Tahun berdiri",
+          "value": "2014",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "accreditation",
+          "label": "Akreditasi",
+          "value": "A",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "students",
+          "label": "Siswa aktif publik",
+          "value": "360+",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "staff",
+          "label": "Guru & staf",
+          "value": "28",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "values",
+          "label": "Nilai sekolah",
+          "value": "Belajar aktif, lingkungan hangat, berkembang bersama.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "button",
+          "label": "Teks tombol",
+          "value": "Kenali Sekolah Kami",
+          "type": "text",
+          "options": []
+        }
+      ]
+    },
+    "program": {
+      "title": "Program Unggulan",
+      "name": "Program Unggulan",
+      "heading": "Belajar melalui pengalaman",
+      "fields": [
+        {
+          "name": "title1",
+          "label": "Nama program",
+          "value": "Literasi & numerasi",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "description1",
+          "label": "Deskripsi",
+          "value": "Fondasi belajar yang menyenangkan.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "title2",
+          "label": "Nama program",
+          "value": "Seni & kreativitas",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "description2",
+          "label": "Deskripsi",
+          "value": "Ruang untuk berekspresi dan berkarya.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "title3",
+          "label": "Nama program",
+          "value": "Olahraga & eksplorasi",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "description3",
+          "label": "Deskripsi",
+          "value": "Gerak aktif dan kerja sama tim.",
+          "type": "text",
+          "options": []
+        }
+      ]
+    },
+    "fasilitas": {
+      "title": "Fasilitas & Galeri",
+      "name": "Fasilitas",
+      "heading": "Ruang nyaman untuk banyak kemungkinan",
+      "fields": [
+        {
+          "name": "description",
+          "label": "Deskripsi fasilitas",
+          "value": "Setiap area mendukung anak belajar, bermain, dan mengeksplorasi.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "alt",
+          "label": "Teks alternatif foto utama",
+          "value": "Siswa belajar bersama guru di ruang kelas.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "image",
+          "label": "Ruang kelas",
+          "value": "classroom.jpeg",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "image2",
+          "label": "Kegiatan belajar",
+          "value": "classroom.jpeg",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "image3",
+          "label": "Lingkungan sekolah",
+          "value": "classroom.jpeg",
+          "type": "text",
+          "options": []
+        }
+      ]
+    },
+    "guru": {
+      "title": "Guru di Website",
+      "name": "Guru & Staf",
+      "heading": "Profil publik pendidik terpilih",
+      "fields": [
+        {
+          "name": "name1",
+          "label": "Nama guru",
+          "value": "Siti Rahma, S.Pd.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "bio1",
+          "label": "Bio singkat",
+          "value": "Mendampingi literasi dan tumbuh kembang anak.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "name2",
+          "label": "Nama guru",
+          "value": "Arif Hidayat, S.Pd.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "bio2",
+          "label": "Bio singkat",
+          "value": "Belajar melalui kegiatan yang aktif dan ceria.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "name3",
+          "label": "Nama guru",
+          "value": "Dewi Kartika, S.Pd.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "bio3",
+          "label": "Bio singkat",
+          "value": "Mengajak anak berekspresi dan berkarya.",
+          "type": "text",
+          "options": []
+        }
+      ]
+    },
+    "ppdb": {
+      "title": "Informasi PPDB Publik",
+      "name": "Informasi PPDB",
+      "heading": "Jadwal, persyaratan & biaya",
+      "fields": [
+        {
+          "name": "documents",
+          "label": "Berkas pendaftaran",
+          "value": "Akta kelahiran, Kartu Keluarga, pasfoto",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "visit",
+          "label": "Kunjungan sekolah",
+          "value": "Berdasarkan janji",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "reenrollment",
+          "label": "Daftar ulang",
+          "value": "Offline di sekolah setelah pemeriksaan Admin",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "target",
+          "label": "Tujuan tombol daftar",
+          "value": "Formulir PPDB online",
+          "type": "text",
+          "options": []
+        }
+      ]
+    },
+    "kontak": {
+      "title": "Kontak, Header & Footer",
+      "name": "Kontak, Header & Footer",
+      "heading": "Isi kontak, header & footer",
+      "fields": [
+        {
+          "name": "email",
+          "label": "Email sekolah",
+          "value": "sdcerianusantara@dumy.com",
+          "type": "email",
+          "options": []
+        },
+        {
+          "name": "phone",
+          "label": "WhatsApp",
+          "value": "+6281234567890",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "address",
+          "label": "Alamat",
+          "value": "Jl. Pelangi Imajiner No. 12, Kel. Awan Ceria, Kota Imajinaria",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "hours",
+          "label": "Jam layanan",
+          "value": "Senin–Jumat · 07.00–15.00 WIB",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "tagline",
+          "label": "Tagline footer",
+          "value": "Belajar ceria, tumbuh bersama.",
+          "type": "text",
+          "options": []
+        },
+        {
+          "name": "navigation",
+          "label": "Navigasi utama",
+          "value": "Profil, Program, Fasilitas, Guru, PPDB, Kontak",
+          "type": "text",
+          "options": []
+        }
+      ]
+    }
+  }
+}

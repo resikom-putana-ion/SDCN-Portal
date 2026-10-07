@@ -1,0 +1,3 @@
+@forelse($documents as $document)<div class="doc-row"><x-icon name="file"/><div>{{ $document->name }}<small>{{ strtoupper(pathinfo($document->name,PATHINFO_EXTENSION)) }} · {{ round($document->size/1024) }} KB</small></div><a href="/admin/dokumen/{{ $document->id }}" aria-label="Unduh {{ $document->name }}"><x-icon name="download"/></a></div>@empty
+@foreach(($record->kind==='staff'?['Ijazah pendidikan','Surat penugasan']:['Akta kelahiran','Kartu Keluarga']) as $label)<div class="doc-row"><x-icon name="file"/><div>{{ $label }}<small>Berkas contoh desain · Belum diunggah</small></div><span class="muted">—</span></div>@endforeach
+@endforelse

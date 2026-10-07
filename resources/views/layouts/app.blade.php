@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="{{ session('locale','id') }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}"><title>{{ __($title ?? 'Beranda') }} · SD Ceria Nusantara</title><link rel="icon" href="/assets/logo.png"><link rel="stylesheet" href="/css/app.css"><script src="/js/app.js" defer></script></head>
+<body>
+@php
+$menus=\App\Support\School::config()['menus'];
+@endphp
+<aside class="sidebar"><a href="/admin" class="brand"><img src="/assets/logo.png" alt="Logo SD Ceria Nusantara"><span><strong>SD Ceria</strong><small>Nusantara</small></span></a>
+<div class="sidebar-inner"><a href="/admin/pengaturan" class="account"><span class="avatar">AS</span><div><strong>{{ __('Admin Sekolah') }}</strong><small>{{ __('Sekolah & website') }}</small></div></a><p class="nav-label">{{ __('MENU UTAMA') }}</p>
+<nav aria-label="Navigasi utama">@foreach($menus as $menu)
+@if(!$menu[4])<a href="/admin" class="nav-item {{ ($group??'')==='' && ($screen??'')===''?'active':'' }}"><x-icon :name="$menu[2]"/><span>{{ session('locale')==='en'?$menu[1]:$menu[0] }}</span></a>
+@else<details class="nav-group" @if(($group??'')===$menu[3]) open @endif><summary class="nav-item {{ ($group??'')===$menu[3]?'active':'' }}"><x-icon :name="$menu[2]"/><span>{{ session('locale')==='en'?$menu[1]:$menu[0] }}</span><x-icon name="chevron" class="chevron"/></summary><div class="subnav">@foreach($menu[4] as $child)<a href="/admin/{{ $child[2] }}" class="{{ ($screen??'')===$child[2]?'selected':'' }}">{{ session('locale')==='en'?$child[1]:$child[0] }}</a>@endforeach</div></details>@endif
+@endforeach</nav><div class="sidebar-footer"><small>{{ __('Tahun ajaran') }} 2026/2027</small><form method="post" action="/logout">@csrf<button class="text-link">{{ __('Keluar akun') }}</button></form></div></div></aside>
+<header class="topbar"><button class="icon-button hamburger" data-sidebar aria-label="Ciutkan navigasi"><x-icon name="menu"/></button><form action="/admin/cari" class="global-search"><x-icon name="search"/><input name="q" value="{{ request('q') }}" placeholder="{{ __('Cari siswa, pendaftar, atau halaman') }}" aria-label="Cari siswa, pendaftar, atau halaman"></form><button class="round-button" data-theme aria-label="Ganti tema"><x-icon name="moon"/></button><a href="/admin/bahasa" class="flag {{ session('locale')==='en'?'en':'id' }}" aria-label="Pilih bahasa">@if(session('locale')==='en')🇬🇧@endif</a><a href="/admin/notifikasi" class="round-button notification" aria-label="Notifikasi"><x-icon name="bell"/><i></i></a><a href="/admin/pengaturan" class="avatar">AS</a></header>
+<main class="main"><div class="page-heading"><h1>{{ __($titleForm ?? $title ?? 'Beranda') }}</h1><div class="breadcrumb"><a href="/admin">{{ __('Beranda') }}</a> / {{ $breadcrumb ?? __(($group??'')===''?'Sekolah & website':(collect($menus)->first(fn($m)=>$m[3]===($group??''))[0] ?? 'Sekolah & website')) }}@if(($group??'')!=='' && !isset($breadcrumb)) / {{ __($title ?? '') }}@endif</div></div>
+@if(session('success'))<div class="flash success" role="status"><x-icon name="check"/>{{ session('success') }}<button aria-label="Tutup" data-dismiss>×</button></div>@endif
+@if($errors->any())<div class="flash danger" role="alert"><div>@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div></div>@endif
+@yield('content')
+</main><dialog id="confirm-dialog"><h2>Konfirmasi tindakan</h2><p id="confirm-message"></p><div class="actions"><button class="btn secondary" data-confirm-cancel>Batal</button><button class="btn" data-confirm-accept>Lanjutkan</button></div></dialog>
+</body></html>

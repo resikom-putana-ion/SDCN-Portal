@@ -1,0 +1,821 @@
+[
+  {
+    "kind": "students",
+    "code": "SCN-2026-001",
+    "data": {
+      "name": "Alya Putri",
+      "nis": "SCN-2026-001",
+      "class": "1A",
+      "guardian": "Ratna Putri",
+      "gender": "Perempuan",
+      "birth_date": "2020-02-12",
+      "phone": "0812 3456 7891",
+      "email": "ratna.putri@example.com",
+      "year": "2026/2027",
+      "address": "Jl. Pelangi Imajiner No. 15, Kota Imajinaria",
+      "father": "Dimas Putra",
+      "previous_school": "TK Pelangi Ceria",
+      "status": "Aktif",
+      "joined": "2026-07-15"
+    }
+  },
+  {
+    "kind": "students",
+    "code": "SCN-2026-002",
+    "data": {
+      "name": "Bima Pratama",
+      "nis": "SCN-2026-002",
+      "class": "1A",
+      "guardian": "Dedi Pratama",
+      "gender": "Laki-laki",
+      "birth_date": "2020-02-12",
+      "phone": "0812 3456 7891",
+      "email": "dedi.pratama@example.com",
+      "year": "2026/2027",
+      "address": "Jl. Pelangi Imajiner No. 15, Kota Imajinaria",
+      "father": "Dimas Putra",
+      "previous_school": "TK Pelangi Ceria",
+      "status": "Aktif",
+      "joined": "2026-07-15"
+    }
+  },
+  {
+    "kind": "students",
+    "code": "SCN-2026-003",
+    "data": {
+      "name": "Citra Lestari",
+      "nis": "SCN-2026-003",
+      "class": "2A",
+      "guardian": "Sari Lestari",
+      "gender": "Perempuan",
+      "birth_date": "2020-02-12",
+      "phone": "0812 3456 7891",
+      "email": "sari.lestari@example.com",
+      "year": "2026/2027",
+      "address": "Jl. Pelangi Imajiner No. 15, Kota Imajinaria",
+      "father": "Dimas Putra",
+      "previous_school": "TK Pelangi Ceria",
+      "status": "Aktif",
+      "joined": "2026-07-15"
+    }
+  },
+  {
+    "kind": "students",
+    "code": "SCN-2026-004",
+    "data": {
+      "name": "Nadia Maharani",
+      "nis": "SCN-2026-004",
+      "class": "5A",
+      "guardian": "Rina Maharani",
+      "gender": "Perempuan",
+      "birth_date": "2020-02-12",
+      "phone": "0812 3456 7891",
+      "email": "rina.maharani@example.com",
+      "year": "2026/2027",
+      "address": "Jl. Pelangi Imajiner No. 15, Kota Imajinaria",
+      "father": "Dimas Putra",
+      "previous_school": "TK Pelangi Ceria",
+      "status": "Aktif",
+      "joined": "2026-07-15"
+    }
+  },
+  {
+    "kind": "staff",
+    "code": "GTK-001",
+    "data": {
+      "name": "Siti Rahma, S.Pd.",
+      "employee_id": "GTK-001",
+      "position": "Guru kelas",
+      "assignment": "Wali kelas 1A",
+      "education": "S1 PGSD",
+      "phone": "0812 3456 7801",
+      "email": "siti.rahma@example.com",
+      "gender": "Perempuan",
+      "birth_date": "1992-04-18",
+      "joined": "2019-07-15",
+      "status": "Aktif"
+    }
+  },
+  {
+    "kind": "staff",
+    "code": "GTK-002",
+    "data": {
+      "name": "Arif Hidayat, S.Pd.",
+      "employee_id": "GTK-002",
+      "position": "Guru kelas",
+      "assignment": "Wali kelas 1B",
+      "education": "S1 PGSD",
+      "phone": "0812 3456 7802",
+      "email": "arif.hidayat@example.com",
+      "gender": "Laki-laki",
+      "birth_date": "1992-04-18",
+      "joined": "2019-07-15",
+      "status": "Aktif"
+    }
+  },
+  {
+    "kind": "staff",
+    "code": "GTK-003",
+    "data": {
+      "name": "Dewi Kartika, S.Pd.",
+      "employee_id": "GTK-003",
+      "position": "Guru kelas",
+      "assignment": "Wali kelas 2A",
+      "education": "S1 PGSD",
+      "phone": "0812 3456 7803",
+      "email": "dewi.kartika@example.com",
+      "gender": "Perempuan",
+      "birth_date": "1992-04-18",
+      "joined": "2019-07-15",
+      "status": "Aktif"
+    }
+  },
+  {
+    "kind": "staff",
+    "code": "STF-001",
+    "data": {
+      "name": "Budi Santoso",
+      "employee_id": "STF-001",
+      "position": "Tata Usaha",
+      "assignment": "Operator administrasi",
+      "education": "S1 Administrasi",
+      "phone": "0812 3456 7804",
+      "email": "budi.santoso@example.com",
+      "gender": "Laki-laki",
+      "birth_date": "1992-04-18",
+      "joined": "2019-07-15",
+      "status": "Aktif"
+    }
+  },
+  {
+    "kind": "applicants",
+    "code": "PPDB-2027-014",
+    "data": {
+      "name": "Raka Aditya",
+      "number": "PPDB-2027-014",
+      "guardian": "Maya Aditya",
+      "status": "Pemeriksaan",
+      "date": "2026-10-05",
+      "birth_date": "2020-03-12",
+      "phone": "0812 3456 7815",
+      "email": "maya.aditya@example.com",
+      "relationship": "Ibu",
+      "year": "2027/2028",
+      "appointment": "8 Okt · 09.30",
+      "payment": "Belum dicatat",
+      "previous_school": "TK Pelangi Ceria",
+      "gender": "Laki-laki",
+      "checks": [],
+      "paid": false,
+      "notes": ""
+    }
+  },
+  {
+    "kind": "applicants",
+    "code": "PPDB-2027-013",
+    "data": {
+      "name": "Laras Kirana",
+      "number": "PPDB-2027-013",
+      "guardian": "Indah Kirana",
+      "status": "Menunggu daftar ulang",
+      "date": "2026-10-04",
+      "birth_date": "2020-03-12",
+      "phone": "0812 3456 7815",
+      "email": "indah.kirana@example.com",
+      "relationship": "Ibu",
+      "year": "2027/2028",
+      "appointment": "7 Okt · 09.00",
+      "payment": "Belum dicatat",
+      "previous_school": "TK Pelangi Ceria",
+      "gender": "Perempuan",
+      "checks": [],
+      "paid": false,
+      "notes": ""
+    }
+  },
+  {
+    "kind": "applicants",
+    "code": "PPDB-2027-012",
+    "data": {
+      "name": "Daffa Pratama",
+      "number": "PPDB-2027-012",
+      "guardian": "Dian Pratama",
+      "status": "Perlu perbaikan",
+      "date": "2026-10-04",
+      "birth_date": "2020-03-12",
+      "phone": "0812 3456 7815",
+      "email": "dian.pratama@example.com",
+      "relationship": "Ibu",
+      "year": "2027/2028",
+      "appointment": "8 Okt · 09.30",
+      "payment": "Belum dicatat",
+      "previous_school": "TK Pelangi Ceria",
+      "gender": "Laki-laki",
+      "checks": [],
+      "paid": false,
+      "notes": ""
+    }
+  },
+  {
+    "kind": "applicants",
+    "code": "PPDB-2027-011",
+    "data": {
+      "name": "Naila Putri",
+      "number": "PPDB-2027-011",
+      "guardian": "Ratna Naila",
+      "status": "Lolos administrasi",
+      "date": "2026-10-03",
+      "birth_date": "2020-03-12",
+      "phone": "0812 3456 7815",
+      "email": "ratna.naila@example.com",
+      "relationship": "Ibu",
+      "year": "2027/2028",
+      "appointment": "8 Okt · 09.30",
+      "payment": "Belum dicatat",
+      "previous_school": "TK Pelangi Ceria",
+      "gender": "Perempuan",
+      "checks": [],
+      "paid": false,
+      "notes": ""
+    }
+  },
+  {
+    "kind": "settings",
+    "code": "settings",
+    "data": {
+      "name": "SD Ceria Nusantara",
+      "founded": "2014",
+      "accreditation": "A",
+      "email": "sdcerianusantara@dumy.com",
+      "phone": "+6281234567890",
+      "hours": "Senin–Jumat · 07.00–15.00 WIB",
+      "address": "Jl. Pelangi Imajiner No. 12, Kel. Awan Ceria, Kota Imajinaria",
+      "year": "2026/2027"
+    }
+  },
+  {
+    "kind": "period",
+    "code": "period",
+    "data": {
+      "year": "2027/2028",
+      "period": "Oktober 2026–Mei 2027",
+      "age": "6–7 tahun pada Juli 2027",
+      "capacity": "60",
+      "fee": "250000",
+      "reenrollment": "Offline di sekolah setelah lolos administrasi"
+    }
+  },
+  {
+    "kind": "classes",
+    "code": "CLASS-1",
+    "data": {
+      "name": "1A",
+      "level": "Kelas 1",
+      "teacher": "Siti Rahma",
+      "count": "24 siswa",
+      "status": "Aktif",
+      "year": "2026/2027"
+    }
+  },
+  {
+    "kind": "classes",
+    "code": "CLASS-2",
+    "data": {
+      "name": "1B",
+      "level": "Kelas 1",
+      "teacher": "Arif Hidayat",
+      "count": "24 siswa",
+      "status": "Aktif",
+      "year": "2026/2027"
+    }
+  },
+  {
+    "kind": "classes",
+    "code": "CLASS-3",
+    "data": {
+      "name": "2A",
+      "level": "Kelas 2",
+      "teacher": "Dewi Kartika",
+      "count": "30 siswa",
+      "status": "Aktif",
+      "year": "2026/2027"
+    }
+  },
+  {
+    "kind": "invoices",
+    "code": "INV-2026-001",
+    "data": {
+      "name": "SPP Oktober · Alya Putri",
+      "student_id": 1,
+      "class": "1A",
+      "period": "Oktober 2026",
+      "amount": 300000,
+      "due_date": "2026-10-10",
+      "notes": "SPP bulanan"
+    }
+  },
+  {
+    "kind": "attendance",
+    "code": "ATT-1",
+    "data": {
+      "name": "Alya Putri",
+      "student_id": 1,
+      "class": "1A",
+      "date": "2026-10-05",
+      "notes": "Tepat waktu",
+      "author": "Siti Rahma",
+      "status": "Hadir"
+    }
+  },
+  {
+    "kind": "invoices",
+    "code": "INV-2026-002",
+    "data": {
+      "name": "SPP Oktober · Bima Pratama",
+      "student_id": 2,
+      "class": "1A",
+      "period": "Oktober 2026",
+      "amount": 300000,
+      "due_date": "2026-10-10",
+      "notes": "SPP bulanan"
+    }
+  },
+  {
+    "kind": "attendance",
+    "code": "ATT-2",
+    "data": {
+      "name": "Bima Pratama",
+      "student_id": 2,
+      "class": "1A",
+      "date": "2026-10-05",
+      "notes": "Tepat waktu",
+      "author": "Siti Rahma",
+      "status": "Hadir"
+    }
+  },
+  {
+    "kind": "invoices",
+    "code": "INV-2026-003",
+    "data": {
+      "name": "SPP Oktober · Citra Lestari",
+      "student_id": 3,
+      "class": "2A",
+      "period": "Oktober 2026",
+      "amount": 300000,
+      "due_date": "2026-10-10",
+      "notes": "SPP bulanan"
+    }
+  },
+  {
+    "kind": "attendance",
+    "code": "ATT-3",
+    "data": {
+      "name": "Citra Lestari",
+      "student_id": 3,
+      "class": "2A",
+      "date": "2026-10-05",
+      "notes": "Surat wali",
+      "author": "Siti Rahma",
+      "status": "Izin"
+    }
+  },
+  {
+    "kind": "grades",
+    "code": "GRADE-1",
+    "data": {
+      "name": "Alya Putri",
+      "student_id": 1,
+      "class": "1A",
+      "subject": "Bahasa Indonesia",
+      "semester": "Ganjil 2026/27",
+      "score": 88,
+      "author": "Siti Rahma",
+      "status": "Terbit",
+      "notes": "Alya aktif bertanya dan mulai membaca kalimat pendek dengan lebih percaya diri."
+    }
+  },
+  {
+    "kind": "grades",
+    "code": "GRADE-2",
+    "data": {
+      "name": "Alya Putri",
+      "student_id": 1,
+      "class": "1A",
+      "subject": "Matematika",
+      "semester": "Ganjil 2026/27",
+      "score": 90,
+      "author": "Siti Rahma",
+      "status": "Terbit",
+      "notes": "Alya aktif bertanya dan mulai membaca kalimat pendek dengan lebih percaya diri."
+    }
+  },
+  {
+    "kind": "grades",
+    "code": "GRADE-3",
+    "data": {
+      "name": "Alya Putri",
+      "student_id": 1,
+      "class": "1A",
+      "subject": "Pendidikan Pancasila",
+      "semester": "Ganjil 2026/27",
+      "score": 89,
+      "author": "Siti Rahma",
+      "status": "Terbit",
+      "notes": "Alya aktif bertanya dan mulai membaca kalimat pendek dengan lebih percaya diri."
+    }
+  },
+  {
+    "kind": "announcements",
+    "code": "ANN-1",
+    "data": {
+      "name": "Pekan Literasi Ceria",
+      "audience": "Seluruh warga sekolah",
+      "date": "2026-10-05",
+      "author": "Admin Sekolah",
+      "status": "Terbit",
+      "body": "Kegiatan literasi untuk seluruh kelas. Rincian dibagikan oleh wali kelas."
+    }
+  },
+  {
+    "kind": "announcements",
+    "code": "ANN-2",
+    "data": {
+      "name": "Pertemuan orang tua",
+      "audience": "Orang tua / wali",
+      "date": "2026-10-05",
+      "author": "Admin Sekolah",
+      "status": "Terbit",
+      "body": "Kegiatan literasi untuk seluruh kelas. Rincian dibagikan oleh wali kelas."
+    }
+  },
+  {
+    "kind": "events",
+    "code": "EVT-1",
+    "data": {
+      "name": "Daftar ulang PPDB",
+      "date": "2026-10-07",
+      "time": "09:00",
+      "audience": "Wali Laras Kirana",
+      "location": "Tata Usaha"
+    }
+  },
+  {
+    "kind": "events",
+    "code": "EVT-2",
+    "data": {
+      "name": "Pekan Literasi Ceria",
+      "date": "2026-10-08",
+      "time": "09:00",
+      "audience": "Kelas 1–6",
+      "location": "Perpustakaan"
+    }
+  },
+  {
+    "kind": "events",
+    "code": "EVT-3",
+    "data": {
+      "name": "Pertemuan orang tua",
+      "date": "2026-10-17",
+      "time": "09:00",
+      "audience": "Orang tua / wali",
+      "location": "Aula sekolah"
+    }
+  },
+  {
+    "kind": "transactions",
+    "code": "CASH-1",
+    "data": {
+      "name": "SPP · Bima Pratama",
+      "type": "Pemasukan",
+      "amount": 300000,
+      "method": "Tunai",
+      "date": "2026-10-05",
+      "status": "Selesai",
+      "category": "Kegiatan pembelajaran"
+    }
+  },
+  {
+    "kind": "transactions",
+    "code": "CASH-2",
+    "data": {
+      "name": "Alat kegiatan literasi",
+      "type": "Pengeluaran",
+      "amount": 450000,
+      "method": "Transfer",
+      "date": "2026-10-05",
+      "status": "Selesai",
+      "category": "Kegiatan pembelajaran"
+    }
+  },
+  {
+    "kind": "transactions",
+    "code": "CASH-3",
+    "data": {
+      "name": "PPDB · Laras Kirana",
+      "type": "Pemasukan",
+      "amount": 250000,
+      "method": "Tunai",
+      "date": "2026-10-05",
+      "status": "Selesai",
+      "category": "Kegiatan pembelajaran"
+    }
+  },
+  {
+    "kind": "news",
+    "code": "NEWS-1",
+    "data": {
+      "name": "Pekan Literasi Ceria",
+      "type": "Berita",
+      "status": "Draf",
+      "author": "Admin Sekolah",
+      "date": "2026-10-05",
+      "summary": "Kegiatan literasi untuk seluruh kelas.",
+      "body": "Anak membaca, bercerita, dan belajar bersama melalui kegiatan literasi.",
+      "image": "classroom.jpeg"
+    }
+  },
+  {
+    "kind": "news",
+    "code": "NEWS-2",
+    "data": {
+      "name": "Belajar bersama di kelas",
+      "type": "Galeri",
+      "status": "Terbit",
+      "author": "Admin Sekolah",
+      "date": "2026-10-05",
+      "summary": "Kegiatan literasi untuk seluruh kelas.",
+      "body": "Anak membaca, bercerita, dan belajar bersama melalui kegiatan literasi.",
+      "image": "classroom.jpeg"
+    }
+  },
+  {
+    "kind": "news",
+    "code": "NEWS-3",
+    "data": {
+      "name": "PPDB tahun ajaran 2027/2028",
+      "type": "Informasi",
+      "status": "Terbit",
+      "author": "Admin Sekolah",
+      "date": "2026-10-05",
+      "summary": "Kegiatan literasi untuk seluruh kelas.",
+      "body": "Anak membaca, bercerita, dan belajar bersama melalui kegiatan literasi.",
+      "image": "classroom.jpeg"
+    }
+  },
+  {
+    "kind": "tools",
+    "code": "TOOL-1",
+    "data": {
+      "name": "Perpustakaan",
+      "purpose": "Buku, anggota, peminjaman",
+      "proposal": "Tahap berikutnya",
+      "status": "Menunggu Anda"
+    }
+  },
+  {
+    "kind": "tools",
+    "code": "TOOL-2",
+    "data": {
+      "name": "Kepegawaian & penggajian",
+      "purpose": "Jabatan, cuti, gaji",
+      "proposal": "Tahap berikutnya",
+      "status": "Menunggu Anda"
+    }
+  },
+  {
+    "kind": "tools",
+    "code": "TOOL-3",
+    "data": {
+      "name": "Sertifikat siswa",
+      "purpose": "Penerbitan & unduhan",
+      "proposal": "Tahap berikutnya",
+      "status": "Menunggu Anda"
+    }
+  },
+  {
+    "kind": "tools",
+    "code": "TOOL-4",
+    "data": {
+      "name": "Kunjungan sekolah",
+      "purpose": "Pemesanan jadwal kunjungan",
+      "proposal": "Sederhanakan dahulu",
+      "status": "Menunggu Anda"
+    }
+  },
+  {
+    "kind": "tools",
+    "code": "TOOL-5",
+    "data": {
+      "name": "Komunikasi wali",
+      "purpose": "Pesan dan tindak lanjut",
+      "proposal": "Kontak / pesan sederhana",
+      "status": "Menunggu Anda"
+    }
+  },
+  {
+    "kind": "tools",
+    "code": "TOOL-6",
+    "data": {
+      "name": "Integrasi data",
+      "purpose": "Sinkronisasi sumber eksternal",
+      "proposal": "Saat sumber tersedia",
+      "status": "Menunggu Anda"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-hero",
+    "data": {
+      "section": "hero",
+      "name": "Hero / Beranda",
+      "draft": {
+        "eyebrow": "TUMBUH CERIA SETIAP HARI",
+        "title": "Belajar Ceria, Tumbuh Percaya Diri",
+        "description": "Ruang belajar yang hangat untuk anak mengeksplorasi, bertanya, dan menemukan potensi terbaiknya.",
+        "button": "Daftar Sekarang",
+        "target": "Formulir PPDB online",
+        "secondary": "Lihat Profil Sekolah",
+        "image": "classroom.jpeg"
+      },
+      "published": {
+        "eyebrow": "TUMBUH CERIA SETIAP HARI",
+        "title": "Belajar Ceria, Tumbuh Percaya Diri",
+        "description": "Ruang belajar yang hangat untuk anak mengeksplorasi, bertanya, dan menemukan potensi terbaiknya.",
+        "button": "Daftar Sekarang",
+        "target": "Formulir PPDB online",
+        "secondary": "Lihat Profil Sekolah",
+        "image": "classroom.jpeg"
+      },
+      "status": "Draf",
+      "summary": "Belajar Ceria, Tumbuh Percaya Diri",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-profil",
+    "data": {
+      "section": "profil",
+      "name": "Profil Sekolah",
+      "draft": {
+        "title": "Selamat datang di SD Ceria Nusantara",
+        "description": "Tempat anak merasa diterima, berani mencoba, dan senang belajar.",
+        "founded": "2014",
+        "accreditation": "A",
+        "students": "360+",
+        "staff": "28",
+        "values": "Belajar aktif, lingkungan hangat, berkembang bersama.",
+        "button": "Kenali Sekolah Kami"
+      },
+      "published": {
+        "title": "Selamat datang di SD Ceria Nusantara",
+        "description": "Tempat anak merasa diterima, berani mencoba, dan senang belajar.",
+        "founded": "2014",
+        "accreditation": "A",
+        "students": "360+",
+        "staff": "28",
+        "values": "Belajar aktif, lingkungan hangat, berkembang bersama.",
+        "button": "Kenali Sekolah Kami"
+      },
+      "status": "Terbit",
+      "summary": "Selamat datang di SD Ceria Nusantara",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-program",
+    "data": {
+      "section": "program",
+      "name": "Program Unggulan",
+      "draft": {
+        "title1": "Literasi & numerasi",
+        "description1": "Fondasi belajar yang menyenangkan.",
+        "title2": "Seni & kreativitas",
+        "description2": "Ruang untuk berekspresi dan berkarya.",
+        "title3": "Olahraga & eksplorasi",
+        "description3": "Gerak aktif dan kerja sama tim."
+      },
+      "published": {
+        "title1": "Literasi & numerasi",
+        "description1": "Fondasi belajar yang menyenangkan.",
+        "title2": "Seni & kreativitas",
+        "description2": "Ruang untuk berekspresi dan berkarya.",
+        "title3": "Olahraga & eksplorasi",
+        "description3": "Gerak aktif dan kerja sama tim."
+      },
+      "status": "Terbit",
+      "summary": "Belajar melalui pengalaman",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-fasilitas",
+    "data": {
+      "section": "fasilitas",
+      "name": "Fasilitas",
+      "draft": {
+        "description": "Setiap area mendukung anak belajar, bermain, dan mengeksplorasi.",
+        "alt": "Siswa belajar bersama guru di ruang kelas.",
+        "image": "classroom.jpeg",
+        "image2": "classroom.jpeg",
+        "image3": "classroom.jpeg"
+      },
+      "published": {
+        "description": "Setiap area mendukung anak belajar, bermain, dan mengeksplorasi.",
+        "alt": "Siswa belajar bersama guru di ruang kelas.",
+        "image": "classroom.jpeg",
+        "image2": "classroom.jpeg",
+        "image3": "classroom.jpeg"
+      },
+      "status": "Terbit",
+      "summary": "Ruang nyaman untuk banyak kemungkinan",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-guru",
+    "data": {
+      "section": "guru",
+      "name": "Guru & Staf",
+      "draft": {
+        "name1": "Siti Rahma, S.Pd.",
+        "bio1": "Mendampingi literasi dan tumbuh kembang anak.",
+        "name2": "Arif Hidayat, S.Pd.",
+        "bio2": "Belajar melalui kegiatan yang aktif dan ceria.",
+        "name3": "Dewi Kartika, S.Pd.",
+        "bio3": "Mengajak anak berekspresi dan berkarya."
+      },
+      "published": {
+        "name1": "Siti Rahma, S.Pd.",
+        "bio1": "Mendampingi literasi dan tumbuh kembang anak.",
+        "name2": "Arif Hidayat, S.Pd.",
+        "bio2": "Belajar melalui kegiatan yang aktif dan ceria.",
+        "name3": "Dewi Kartika, S.Pd.",
+        "bio3": "Mengajak anak berekspresi dan berkarya."
+      },
+      "status": "Terbit",
+      "summary": "Profil publik pendidik terpilih",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-ppdb",
+    "data": {
+      "section": "ppdb",
+      "name": "Informasi PPDB",
+      "draft": {
+        "documents": "Akta kelahiran, Kartu Keluarga, pasfoto",
+        "visit": "Berdasarkan janji",
+        "reenrollment": "Offline di sekolah setelah pemeriksaan Admin",
+        "target": "Formulir PPDB online"
+      },
+      "published": {
+        "documents": "Akta kelahiran, Kartu Keluarga, pasfoto",
+        "visit": "Berdasarkan janji",
+        "reenrollment": "Offline di sekolah setelah pemeriksaan Admin",
+        "target": "Formulir PPDB online"
+      },
+      "status": "Draf",
+      "summary": "Jadwal, persyaratan & biaya",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  },
+  {
+    "kind": "content",
+    "code": "CONTENT-kontak",
+    "data": {
+      "section": "kontak",
+      "name": "Kontak, Header & Footer",
+      "draft": {
+        "email": "sdcerianusantara@dumy.com",
+        "phone": "+6281234567890",
+        "address": "Jl. Pelangi Imajiner No. 12, Kel. Awan Ceria, Kota Imajinaria",
+        "hours": "Senin–Jumat · 07.00–15.00 WIB",
+        "tagline": "Belajar ceria, tumbuh bersama.",
+        "navigation": "Profil, Program, Fasilitas, Guru, PPDB, Kontak"
+      },
+      "published": {
+        "email": "sdcerianusantara@dumy.com",
+        "phone": "+6281234567890",
+        "address": "Jl. Pelangi Imajiner No. 12, Kel. Awan Ceria, Kota Imajinaria",
+        "hours": "Senin–Jumat · 07.00–15.00 WIB",
+        "tagline": "Belajar ceria, tumbuh bersama.",
+        "navigation": "Profil, Program, Fasilitas, Guru, PPDB, Kontak"
+      },
+      "status": "Terbit",
+      "summary": "Isi kontak, header & footer",
+      "author": "Admin Sekolah",
+      "date": "2026-10-04"
+    }
+  }
+]
