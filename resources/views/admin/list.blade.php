@@ -15,9 +15,20 @@ $school=\App\Support\School::class;
 @if(!in_array($screen,['alat','aktivitas']))
 <form class="filters" data-filter-form method="get"><label class="search-field"><x-icon name="search"/><input name="q" value="{{ request('q') }}" placeholder="{{ in_array($screen,['pendaftar','daftar-ulang'])?'Cari anak, wali, nomor daftar...':($screen==='guru'?'Cari nama atau ID pegawai...':'Cari nama atau nomor induk...') }}" aria-label="Cari data"></label>
 @php
-$options=$screen==='siswa'?['Semua kelas','1A','1B','2A','5A']:($screen==='guru'?['Semua jabatan','Guru kelas','Tata Usaha']:['Semua status','Aktif','Pemeriksaan','Lolos administrasi','Menunggu daftar ulang','Perlu perbaikan','Terbit','Draf','Hadir','Izin']);
+$options=match($kind){
+    'students'=>['Semua kelas',...\App\Models\SchoolRecord::ofKind('students')->get()->pluck('data.class')->filter()->unique()->sort()->values()->all()],
+    'staff'=>['Semua jabatan',...\App\Models\SchoolRecord::ofKind('staff')->get()->pluck('data.position')->filter()->unique()->sort()->values()->all()],
+    'invoices'=>['Semua status','Belum dibayar','Sebagian','Lunas'],
+    'applicants'=>['Semua status','Pemeriksaan','Lolos administrasi','Menunggu daftar ulang','Siap diaktifkan','Perlu perbaikan','Aktif'],
+    'attendance'=>['Semua status','Hadir','Izin','Sakit','Alpa'],
+    'grades'=>['Semua status','Pemeriksaan','Terbit'],
+    'news'=>['Semua status','Draf','Terbit'],
+    default=>['Semua status',...\App\Models\SchoolRecord::ofKind($kind)->get()->pluck('data.status')->filter()->unique()->values()->all()],
+};
+$years=\App\Models\SchoolRecord::whereIn('kind',[$kind,'students','period','settings'])->get()->pluck('data.year')->filter()->unique()->sort()->values();
 @endphp
-<select name="filter" data-auto-submit aria-label="Filter data">@foreach($options as $option)<option value="{{ $loop->first?'':$option }}" @selected(request('filter')===$option)>{{ $option }}</option>@endforeach</select><select aria-label="Tahun ajaran" name="year" data-auto-submit><option>{{ in_array($screen,['pendaftar','daftar-ulang'])?'2027/2028':'2026/2027' }}</option></select><a href="/admin/export/{{ $kind }}?{{ http_build_query(request()->only('q','filter')) }}" class="btn white">{{ __('Ekspor') }}</a>
+<select name="filter" data-auto-submit aria-label="Filter data">@foreach($options as $option)<option value="{{ $loop->first?'':$option }}" @selected(request('filter')===$option)>{{ $option }}</option>@endforeach</select><select aria-label="Tahun ajaran" name="year" data-auto-submit><option value="">Semua tahun ajaran</option>@foreach($years as $year)<option @selected(request('year')===$year)>{{ $year }}</option>@endforeach</select><a href="/admin/export/{{ $kind }}?{{ http_build_query(request()->only('q','filter','year')) }}" class="btn white">{{ __('Ekspor') }}</a>
+@if(request('tab'))<input type="hidden" name="tab" value="{{ request('tab') }}">@endif
 @if($create)<a class="btn" href="{{ $screen==='kelas'?'/admin/kenaikan':'/admin/'.$screen.'/baru' }}">{{ __($create) }}</a>@endif</form>@endif
 @php
 $rows=$records->map(function($r)use($kind,$screen){$data=$kind==='invoices'?\App\Support\School::invoice($r):$r->data; return [...$data,'_url'=>in_array($kind,['tools','activities'])?null:'/admin/'.$screen.'/'.$r->id];});

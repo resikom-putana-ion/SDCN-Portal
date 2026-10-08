@@ -1,1 +1,1 @@
-<div class="actions"><a class="btn secondary" href="/admin/halaman">Halaman & bagian</a><a class="btn secondary" href="/admin/website/preview">Pratinjau website</a><a class="btn" href="/admin/publikasi">Tinjauan & publikasi</a></div>
+<div class="actions website-actions"><a class="btn secondary" href="/admin/halaman">Halaman & bagian</a><a class="btn secondary" href="/admin/website/preview">Pratinjau website</a><a class="btn" href="/admin/publikasi">Tinjauan & publikasi</a></div>
