@@ -24,9 +24,9 @@ Desain PDF digunakan sebagai spesifikasi tampilan. Teks dalam dokumen audit dibe
 
 1. Pendaftar baru tidak menjadi siswa aktif saat mengirim formulir.
 2. Aktivasi memerlukan lolos administrasi, empat pemeriksaan berkas/data asli, konfirmasi pembayaran, serta nominal sesuai biaya periode PPDB.
-3. Aktivasi, pembuatan siswa, tagihan, dan pembayaran terjadi dalam transaksi database. Indeks unik mencegah aktivasi ganda.
+3. Aktivasi, pembuatan siswa, tagihan, dan pembayaran terjadi dalam transaksi Firestore. Pemeriksaan dokumen dalam transaksi mencegah aktivasi ganda.
 4. Sisa tagihan hanya dikurangi oleh pembayaran berstatus Terverifikasi. Kuitansi untuk pembayaran menunggu tidak dapat diunduh.
-5. Berkas keluarga disimpan pada disk lokal privat, diakses hanya melalui route yang memeriksa sesi admin.
+5. Berkas keluarga disimpan sebagai dokumen dan potongan di Firestore, diakses hanya melalui route yang memeriksa sesi admin.
 6. Website menyimpan draf dan versi terbit terpisah. Publikasi memerlukan lima checklist dan catatan tinjauan.
 7. Rapor PDF hanya memuat nilai Terbit. Kartu identitas menggunakan tampilan cetak browser.
 

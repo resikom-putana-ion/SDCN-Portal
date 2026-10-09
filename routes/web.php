@@ -8,6 +8,8 @@ use App\Http\Middleware\SchoolAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::bind('record', fn ($id) => \App\Models\SchoolRecord::findOrFail($id));
+
 Route::get('/', fn () => redirect('/admin'));
 Route::get('/login', fn () => view('auth.login'))->middleware('guest')->name('login');
 Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:6,1']);
@@ -22,7 +24,7 @@ Route::post('/language', function (Request $request) {
 
     return back();
 });
-Route::get('/website', [WebsiteController::class, 'publicPage']);
+Route::get('/media/{filename}', [WebsiteController::class, 'media']);
 Route::get('/ppdb', [WebsiteController::class, 'application']);
 Route::post('/ppdb', [WebsiteController::class, 'submitApplication'])->middleware('throttle:5,1');
 Route::get('/ppdb/berhasil', fn () => session()->has('registration') ? view('public.success') : redirect('/ppdb'));

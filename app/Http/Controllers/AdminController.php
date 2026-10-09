@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SchoolRecord;
 use App\Support\School;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Support\CloudData as DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +18,7 @@ class AdminController extends Controller
 
     public function page(Request $request, string $screen, ?string $id = null, ?string $tab = null)
     {
+        if ($screen === 'berita') return redirect('/admin/website/gallery/edit');
         $cfg = School::config();
         $definition = $cfg['pages'][$screen] ?? null;
         $shared = ['screen' => $screen, 'tab' => $tab ?? 'detail'];
@@ -91,7 +92,7 @@ class AdminController extends Controller
         })->values();
     }
 
-    public function save(Request $request, string $kind, ?int $id = null)
+    public function save(Request $request, string $kind, ?string $id = null)
     {
         $cfg = School::config();
         abort_unless(isset($cfg['forms'][$kind]), 404);
@@ -108,7 +109,7 @@ class AdminController extends Controller
                 $rules[$name] .= '|in:'.implode(',', $field['options']);
             }
             if ($type === 'student') {
-                $rules[$name] = ['required', 'integer', Rule::exists('school_records', 'id')->where('kind', 'students')];
+                $rules[$name] = ['required', 'string', function ($attribute, $value, $fail) { if (!SchoolRecord::ofKind('students')->find($value)) $fail('Siswa tidak ditemukan.'); }];
             }
         }
         if ($kind === 'grades') {
@@ -122,7 +123,7 @@ class AdminController extends Controller
         }
         if (in_array($kind, ['students', 'staff'])) {
             $key = $kind === 'students' ? 'nis' : 'employee_id';
-            $request->validate([$key => [Rule::unique('school_records', 'code')->ignore($record?->id)]]);
+            if (SchoolRecord::where('code', $data[$key])->get()->first(fn ($row) => (string) $row->id !== (string) $record?->id)) throw \Illuminate\Validation\ValidationException::withMessages([$key => 'Nomor sudah digunakan.']);
         }
         if ($kind === 'invoices' && $record && DB::table('school_payments')->where('invoice_id', $record->id)->exists()) {
             return back()->withErrors(['amount' => 'Tagihan dengan pembayaran tidak dapat diubah.']);
@@ -135,11 +136,13 @@ class AdminController extends Controller
         $record ??= new SchoolRecord(['kind' => $kind]);
         DB::transaction(function () use ($record, $code, $data, $kind) {
             $record->fill(['code' => $code, 'data' => $data])->save();
-            if ($kind === 'settings') {
-                foreach (['kontak' => ['email', 'phone', 'hours', 'address'], 'profil' => ['founded', 'accreditation']] as $section => $keys) {
-                    $content = SchoolRecord::where('code', 'CONTENT-'.$section)->firstOrFail();
-                    $content->update(['data' => [...$content->data, 'draft' => [...$content->value('draft', []), ...array_intersect_key($data, array_flip($keys))], 'status' => 'Draf', 'author' => auth()->user()->name, 'date' => now()->toDateString()]]);
-                }
+            if (in_array($kind, ['settings', 'period'])) {
+                $website = app(\App\Services\WebsiteContent::class);
+                $editor = $website->editor('settings');
+                $draft = $editor['data'];
+                $mapping = $kind === 'period' ? ['period' => 'period', 'age' => 'age', 'fee' => 'fee'] : ['email' => 'email', 'phone' => 'whatsapp', 'hours' => 'hours', 'address' => 'address', 'founded' => 'founded', 'accreditation' => 'accreditation', 'name' => 'school_name'];
+                foreach ($mapping as $from => $to) if (isset($data[$from])) $draft[$to] = $from === 'fee' ? School::money($data[$from]) : (string) $data[$from];
+                $website->save('settings', $draft, $editor['version']);
             }
             School::log('Menyimpan '.($data['name'] ?? $kind), $kind, 'Tersimpan');
         });

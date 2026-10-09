@@ -6,7 +6,7 @@ $invoices=\App\Models\SchoolRecord::ofKind('invoices')->get();
 if(request('student'))$invoices=$invoices->filter(fn($r)=>(string)$r->value('student_id')===request('student'));
 $invoice=$invoices->firstWhere('id',(int)request('invoice'))??$invoices->first();
 $d=$invoice?\App\Support\School::invoice($invoice):null;
-$payments=$invoice?\Illuminate\Support\Facades\DB::table('school_payments')->where('invoice_id',$invoice->id)->orderByDesc('id')->get():collect();
+$payments=$invoice?\App\Support\CloudData::table('school_payments')->where('invoice_id',$invoice->id)->orderByDesc('id')->get():collect();
 @endphp
 <div class="tabs">@foreach(['verifikasi'=>['Verifikasi','users'],'tunai'=>['Tunai di sekolah','calendar'],'riwayat'=>['Riwayat','wallet'],'kuitansi'=>['Kuitansi','book']] as $key=>[$label,$icon])<a class="{{ $active===$key?'active':'' }}" href="?tab={{ $key }}&invoice={{ $invoice?->id }}"><x-icon :name="$icon"/>{{ $label }}</a>@endforeach</div>
 <x-card title="Cari tagihan siswa"><form method="get" class="form-grid no-margin"><input type="hidden" name="tab" value="{{ $active }}"><label class="field">Nama / nomor induk<select name="invoice" data-auto-submit>@foreach($invoices as $item)<option value="{{ $item->id }}" @selected($invoice?->id===$item->id)>{{ $item->value('name') }}</option>@endforeach</select></label><label class="field">Tahun / periode<input value="2026/2027 · {{ $d['period']??'—' }}" readonly></label></form></x-card>

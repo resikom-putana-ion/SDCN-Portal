@@ -6,7 +6,7 @@ use App\Models\SchoolRecord;
 use App\Support\PdfDocument;
 use App\Support\School;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Support\CloudData as DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -65,7 +65,7 @@ class WorkflowController extends Controller
 
     public function payment(Request $request)
     {
-        $data = $request->validate(['invoice_id' => 'required|integer', 'amount' => 'required|integer|min:1', 'received_at' => 'required|date|before_or_equal:today', 'reference' => 'required|string|max:100', 'method' => 'required|in:Tunai di sekolah,Transfer manual']);
+        $data = $request->validate(['invoice_id' => 'required|string', 'amount' => 'required|integer|min:1', 'received_at' => 'required|date|before_or_equal:today', 'reference' => 'required|string|max:100', 'method' => 'required|in:Tunai di sekolah,Transfer manual']);
         $id = DB::transaction(function () use ($data) {
             $invoice = SchoolRecord::ofKind('invoices')->lockForUpdate()->findOrFail($data['invoice_id']);
             if (DB::table('school_payments')->where('reference', $data['reference'])->exists()) {
@@ -83,7 +83,7 @@ class WorkflowController extends Controller
         return redirect('/admin/pembayaran?tab=riwayat')->with('success', 'Pembayaran berhasil dicatat.');
     }
 
-    public function verifyPayment(Request $request, int $id)
+    public function verifyPayment(Request $request, string $id)
     {
         $data = $request->validate(['notes' => 'required|string|max:3000', 'confirmed' => 'accepted']);
         DB::transaction(function () use ($id, $data) {
@@ -104,7 +104,7 @@ class WorkflowController extends Controller
         return back()->with('success', 'Pembayaran terverifikasi. Sisa tagihan diperbarui.');
     }
 
-    public function receipt(int $id)
+    public function receipt(string $id)
     {
         $payment = DB::table('school_payments')->where('status', 'Terverifikasi')->find($id);
         abort_unless($payment, 404);
@@ -114,7 +114,7 @@ class WorkflowController extends Controller
         return view('admin.receipt', ['title' => 'Kuitansi Pembayaran', 'group' => 'finance', 'screen' => 'pembayaran', 'payment' => $payment, 'invoice' => $invoice, 'student' => $student]);
     }
 
-    public function inspectPayment(int $id)
+    public function inspectPayment(string $id)
     {
         $payment = DB::table('school_payments')->find($id);
         abort_unless($payment, 404);
@@ -123,7 +123,7 @@ class WorkflowController extends Controller
         return view('admin.payment-review', ['title' => 'Periksa Pembayaran', 'group' => 'finance', 'screen' => 'pembayaran', 'payment' => $payment, 'invoice' => $invoice]);
     }
 
-    public function receiptPdf(int $id)
+    public function receiptPdf(string $id)
     {
         $payment = DB::table('school_payments')->where('status', 'Terverifikasi')->find($id);
         abort_unless($payment, 404);
@@ -141,23 +141,25 @@ class WorkflowController extends Controller
         return PdfDocument::download('pdf.report', compact('record', 'grades'), 'Rapor-'.$record->code.'.pdf');
     }
 
-    public function document(int $id)
+    public function document(string $id, \App\Services\FirestoreFileStorage $files)
     {
         $doc = DB::table('school_documents')->find($id);
-        abort_unless($doc && Storage::disk('local')->exists($doc->path), 404);
-
-        return Storage::disk('local')->download($doc->path, $doc->name);
+        $file = $doc ? $files->get($doc->path) : null;
+        abort_unless($file, 404);
+        return response()->streamDownload(static function () use ($file) { echo $file['contents']; }, \Illuminate\Support\Str::ascii(basename($doc->name)), ['Content-Type' => $file['content_type'], 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
-    public function uploadDocument(Request $request, SchoolRecord $record)
+    public function uploadDocument(Request $request, SchoolRecord $record, \App\Services\FirestoreFileStorage $files)
     {
         abort_unless(in_array($record->kind, ['students', 'staff', 'applicants']), 404);
         $request->validate(['document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', 'name' => 'required|string|max:150']);
         $file = $request->file('document');
-        $path = $file->store('documents', 'local');
-        DB::table('school_documents')->insert(['record_id' => $record->id, 'name' => $request->name.'.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now()]);
-        School::log('Mengunggah dokumen '.$record->code, 'Dokumen', 'Tersimpan');
-
+        $path = 'dashboard-documents/'.\Illuminate\Support\Str::uuid().'.'.$file->extension();
+        DB::transaction(function () use ($record, $request, $file, $path, $files) {
+            $files->putUploadedFile($path, $file);
+            DB::table('school_documents')->insert(['record_id' => $record->id, 'name' => $request->name.'.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now()]);
+            School::log('Mengunggah dokumen '.$record->code, 'Dokumen', 'Tersimpan');
+        });
         return back()->with('success', 'Dokumen berhasil diunggah.');
     }
 

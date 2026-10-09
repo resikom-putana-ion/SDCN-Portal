@@ -1,6 +1,14 @@
-<div class="public-nav"><a href="/website" class="brand"><img src="/assets/logo.png" alt="Logo SD Ceria Nusantara"><span><strong>SD Ceria Nusantara</strong></span></a><a href="#profil">Profil</a><a href="#program">Program</a><a href="#fasilitas">Fasilitas</a><a href="#ppdb">PPDB</a><a class="btn" href="/ppdb">Daftar Sekarang</a></div>
-<section class="public-hero" id="profil"><div><span class="eyebrow">{{ $content['hero']['eyebrow'] }}</span><h1>{{ $content['hero']['title'] }}</h1><p>{{ $content['hero']['description'] }}</p><a class="btn" href="/ppdb">{{ $content['hero']['button'] }}</a></div><img src="/assets/{{ $content['hero']['image'] }}" alt="{{ $content['fasilitas']['alt'] }}" id="fasilitas"></section>
-<section class="public-stats">@foreach(['students'=>'Siswa aktif','staff'=>'Guru & staf','founded'=>'Tahun berdiri','accreditation'=>'Akreditasi'] as $key=>$label)<div><strong>{{ $content['profil'][$key] }}</strong><span>{{ $label }}</span></div>@endforeach</section>
-<section class="public-section" id="program"><h2>Belajar melalui pengalaman</h2><div class="grid-3">@foreach([1,2,3] as $n)<x-card><h3>{{ $content['program']['title'.$n] }}</h3><p class="muted" style="margin-top:12px">{{ $content['program']['description'.$n] }}</p></x-card>@endforeach</div></section>
-<section class="public-section" id="ppdb" style="background:var(--pale)"><h2>PPDB {{ $period['year'] }}</h2><p>{{ $period['period'] }} · Usia {{ $period['age'] }} · Biaya pendaftaran {{ \App\Support\School::money($period['fee']) }}</p><p style="margin-top:16px">Daftar online → pemeriksaan Admin → daftar ulang offline → penerimaan siswa.</p></section>
-<footer class="public-footer"><strong>SD Ceria Nusantara · {{ $content['kontak']['tagline'] }}</strong><p>{{ $content['kontak']['email'] }} · WA {{ $content['kontak']['phone'] }}</p><p>{{ $content['kontak']['address'] }}</p></footer>
+@php($settings=$content['settings']??[])
+<div class="public-nav"><a href="/website" class="brand"><strong>{{ $settings['school_name']??'SD Ceria Nusantara' }}</strong></a><a href="#about">Profil</a><a href="#program">Program</a><a href="#facilities">Fasilitas</a><a class="btn" href="/ppdb">Daftar Sekarang</a></div>
+@foreach($content as $section=>$data)
+<section class="public-section" id="{{ $section }}">
+@if($section==='home')<div class="public-hero"><div><span class="eyebrow">{{ $data['eyebrow']??'' }}</span><h1>{{ $data['title']??'' }}</h1><p>{{ $data['description']??'' }}</p></div>@if(!empty($data['image']))<img src="{{ \App\Services\WebsiteContent::image($data['image']) }}" alt="{{ $data['title']??'' }}">@endif</div>
+@else<h2>{{ \App\Services\WebsiteContent::SECTIONS[$section]??$section }}</h2>@endif
+<div class="grid-3">@foreach(\Illuminate\Support\Arr::dot($data) as $key=>$value)
+@if(is_scalar($value) && $value!=='' && !str_ends_with($key,'.icon'))
+@if(preg_match('/(^image$|_image$|^logo$|\.photo$)/',$key))<img src="{{ \App\Services\WebsiteContent::image((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" style="max-width:100%;max-height:220px;object-fit:cover">
+@elseif(!($section==='home' && in_array($key,['eyebrow','title','description'])))<div><h3>{{ \App\Services\ContentLabels::label($key) }}</h3><p style="white-space:pre-line">{{ $value }}</p></div>@endif
+@endif
+@endforeach</div></section>
+@endforeach
+<footer class="public-footer"><strong>{{ $settings['school_name']??'' }}</strong><p>{{ $settings['email']??'' }} ? {{ $settings['whatsapp']??'' }}</p><p>{{ $settings['address']??'' }}</p></footer>
