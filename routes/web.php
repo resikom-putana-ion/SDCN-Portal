@@ -31,11 +31,14 @@ Route::get('/ppdb/berhasil', fn () => session()->has('registration') ? view('pub
 
 Route::middleware(['auth', SchoolAdmin::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::post('/profil-admin', [\App\Http\Controllers\AdminProfileController::class, 'save']);
+    Route::get('/foto-admin', [\App\Http\Controllers\AdminProfileController::class, 'photo']);
     Route::get('/export/{kind}', [AdminController::class, 'export']);
     Route::get('/dokumen/{id}', [WorkflowController::class, 'document']);
     Route::post('/dokumen/{record}', [WorkflowController::class, 'uploadDocument']);
     Route::get('/identitas/{record}', [WorkflowController::class, 'identity']);
     Route::get('/foto-siswa/{record}', [AdminController::class, 'studentPhoto']);
+    Route::get('/foto-guru/{record}', [AdminController::class, 'staffPhoto']);
     Route::post('/record/{kind}/{id?}', [AdminController::class, 'save']);
     Route::post('/ppdb/{record}/review', [WorkflowController::class, 'review']);
     Route::post('/ppdb/{record}/offline', [WorkflowController::class, 'offline']);

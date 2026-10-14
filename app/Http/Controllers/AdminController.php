@@ -115,9 +115,9 @@ class AdminController extends Controller
         if ($kind === 'grades') {
             $rules['score'] = 'required|integer|min:0|max:100';
         }
-        if ($kind === 'students') {
+        if (in_array($kind, ['students', 'staff'])) {
             $rules['name'] = ['required', 'string', 'max:1000', function ($attribute, $value, $fail) {
-                if ($value !== mb_strtoupper($value)) $fail('Nama siswa harus menggunakan huruf kapital, contoh: BUDI SANTOSO.');
+                if ($value !== mb_strtoupper($value)) $fail('Nama harus menggunakan huruf kapital, contoh: BUDI SANTOSO.');
             }];
             $rules['photo_crop'] = ['nullable', 'string', 'max:700000', function ($attribute, $value, $fail) {
                 $bytes = str_starts_with($value, 'data:image/jpeg;base64,') ? base64_decode(substr($value, 23), true) : false;
@@ -148,7 +148,7 @@ class AdminController extends Controller
         $record ??= new SchoolRecord(['kind' => $kind]);
         DB::transaction(function () use ($record, $code, $data, $kind, $photo) {
             if ($photo) {
-                $path = 'student-photos/'.Str::uuid().'.jpg';
+                $path = ($kind === 'staff' ? 'staff-photos/' : 'student-photos/').Str::uuid().'.jpg';
                 app(\App\Services\FirestoreFileStorage::class)->put($path, base64_decode(substr($photo, 23), true), 'image/jpeg');
                 $data['photo_path'] = $path;
             }
@@ -170,7 +170,17 @@ class AdminController extends Controller
 
     public function studentPhoto(SchoolRecord $record)
     {
-        abort_unless($record->kind === 'students' && $record->value('photo_path'), 404);
+        return $this->profilePhoto($record, 'students');
+    }
+
+    public function staffPhoto(SchoolRecord $record)
+    {
+        return $this->profilePhoto($record, 'staff');
+    }
+
+    private function profilePhoto(SchoolRecord $record, string $kind)
+    {
+        abort_unless($record->kind === $kind && $record->value('photo_path'), 404);
         $photo = app(\App\Services\FirestoreFileStorage::class)->get($record->value('photo_path'));
         abort_unless($photo && $photo['content_type'] === 'image/jpeg', 404);
         return response($photo['contents'])->header('Content-Type', 'image/jpeg')->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff');

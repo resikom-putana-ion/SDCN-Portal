@@ -1,7 +1,7 @@
 document.querySelectorAll('[data-capital-error]').forEach(error=>{
     const input=error.closest('.field').querySelector('input');
     const validate=()=>{
-        const message=input.value!==input.value.toLocaleUpperCase('id-ID')?'Nama siswa harus menggunakan huruf kapital, contoh: BUDI SANTOSO.':'';
+        const message=input.value!==input.value.toLocaleUpperCase('id-ID')?'Nama harus menggunakan huruf kapital, contoh: BUDI SANTOSO.':'';
         error.textContent=message; error.hidden=!message;
         input.setCustomValidity(message); input.setAttribute('aria-invalid',message?'true':'false');
     };

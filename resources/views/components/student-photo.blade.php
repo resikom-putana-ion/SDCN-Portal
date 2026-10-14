@@ -1,8 +1,8 @@
-@props(['record'=>null])
+@props(['record'=>null, 'staff'=>false, 'admin'=>false])
 <section data-student-photo class="student-photo-editor">
-    <h3>Foto siswa (opsional)</h3>
+    <h3>Foto {{ $admin ? 'admin' : ($staff ? 'guru / staf' : 'siswa') }} (opsional)</h3>
     <p class="muted">Pilih JPG, PNG, atau WebP maksimal 5 MB. Atur potongan persegi agar wajah terlihat rapi.</p>
-    <img data-photo-preview class="student-photo-preview" src="{{ $record?->value('photo_path') ? '/admin/foto-siswa/'.$record->id : '/assets/student.png' }}" alt="Pratinjau foto siswa">
+    <img data-photo-preview class="student-photo-preview" src="{{ $admin ? ((auth()->user()->photo_path ?? null) ? '/admin/foto-admin' : '/assets/staff.png') : ($record?->value('photo_path') ? '/admin/'.($staff ? 'foto-guru' : 'foto-siswa').'/'.$record->id : '/assets/'.($staff ? 'teacher.png' : 'student.png')) }}" alt="Pratinjau foto {{ $admin ? 'admin' : ($staff ? 'guru / staf' : 'siswa') }}">
     <label class="field">Pilih foto<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file></label>
     <input type="hidden" name="photo_crop" value="{{ old('photo_crop') }}" data-photo-result>
     <small class="error-text" data-photo-error aria-live="polite"></small>
