@@ -114,7 +114,7 @@ class SchoolWorkflowTest extends CloudTestCase
         $this->actingAs($this->admin());
         $student = SchoolRecord::ofKind('students')->first();
         $data = $student->data;
-        $data['name'] = '=HYPERLINK("test")';
+        $data['name'] = '=HYPERLINK("TEST")';
         $this->post('/admin/record/students/'.$student->id, $data)->assertSessionHasNoErrors();
         $this->get('/admin/siswa?q=HYPERLINK')->assertSee('HYPERLINK');
         $response = $this->get('/admin/export/students');

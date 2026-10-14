@@ -35,6 +35,7 @@ Route::middleware(['auth', SchoolAdmin::class])->prefix('admin')->group(function
     Route::get('/dokumen/{id}', [WorkflowController::class, 'document']);
     Route::post('/dokumen/{record}', [WorkflowController::class, 'uploadDocument']);
     Route::get('/identitas/{record}', [WorkflowController::class, 'identity']);
+    Route::get('/foto-siswa/{record}', [AdminController::class, 'studentPhoto']);
     Route::post('/record/{kind}/{id?}', [AdminController::class, 'save']);
     Route::post('/ppdb/{record}/review', [WorkflowController::class, 'review']);
     Route::post('/ppdb/{record}/offline', [WorkflowController::class, 'offline']);

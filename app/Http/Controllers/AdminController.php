@@ -115,7 +115,19 @@ class AdminController extends Controller
         if ($kind === 'grades') {
             $rules['score'] = 'required|integer|min:0|max:100';
         }
+        if ($kind === 'students') {
+            $rules['name'] = ['required', 'string', 'max:1000', function ($attribute, $value, $fail) {
+                if ($value !== mb_strtoupper($value)) $fail('Nama siswa harus menggunakan huruf kapital, contoh: BUDI SANTOSO.');
+            }];
+            $rules['photo_crop'] = ['nullable', 'string', 'max:700000', function ($attribute, $value, $fail) {
+                $bytes = str_starts_with($value, 'data:image/jpeg;base64,') ? base64_decode(substr($value, 23), true) : false;
+                $size = $bytes !== false ? @getimagesizefromstring($bytes) : false;
+                if (!$size || $size[0] !== 512 || $size[1] !== 512 || $size[2] !== IMAGETYPE_JPEG) $fail('Foto harus dipotong melalui alat crop menjadi gambar persegi.');
+            }];
+        }
         $data = $request->validate($rules);
+        $photo = $data['photo_crop'] ?? null;
+        unset($data['photo_crop']);
         if (isset($data['student_id'])) {
             $student = SchoolRecord::ofKind('students')->findOrFail($data['student_id']);
             $data['name'] = $kind === 'invoices' ? $data['name'].' '.$data['period'].' · '.$student->value('name') : $student->value('name');
@@ -134,7 +146,12 @@ class AdminController extends Controller
         $data = [...($record?->data ?? []), ...$data, 'author' => auth()->user()->name, 'status' => $status];
         $code = $data['nis'] ?? $data['employee_id'] ?? $record?->code ?? strtoupper($kind).'-'.Str::uuid();
         $record ??= new SchoolRecord(['kind' => $kind]);
-        DB::transaction(function () use ($record, $code, $data, $kind) {
+        DB::transaction(function () use ($record, $code, $data, $kind, $photo) {
+            if ($photo) {
+                $path = 'student-photos/'.Str::uuid().'.jpg';
+                app(\App\Services\FirestoreFileStorage::class)->put($path, base64_decode(substr($photo, 23), true), 'image/jpeg');
+                $data['photo_path'] = $path;
+            }
             $record->fill(['code' => $code, 'data' => $data])->save();
             if (in_array($kind, ['settings', 'period'])) {
                 $website = app(\App\Services\WebsiteContent::class);
@@ -149,6 +166,14 @@ class AdminController extends Controller
         $screen = collect($cfg['pages'])->search(fn ($p) => $p[2] === $kind) ?: ($kind === 'period' ? 'periode' : 'pengaturan');
 
         return redirect(in_array($kind, ['students', 'staff']) ? '/admin/'.$screen.'/'.$record->id : '/admin/'.$screen)->with('success', 'Perubahan berhasil disimpan.');
+    }
+
+    public function studentPhoto(SchoolRecord $record)
+    {
+        abort_unless($record->kind === 'students' && $record->value('photo_path'), 404);
+        $photo = app(\App\Services\FirestoreFileStorage::class)->get($record->value('photo_path'));
+        abort_unless($photo && $photo['content_type'] === 'image/jpeg', 404);
+        return response($photo['contents'])->header('Content-Type', 'image/jpeg')->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff');
     }
 
     public function export(Request $request, string $kind)
