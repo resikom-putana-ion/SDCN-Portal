@@ -28,3 +28,4 @@ body{line-height:1.5}
 .card>.stats:last-child{margin-bottom:0}.profile-info .definition{row-gap:24px}.profile-info .card-heading .badge{margin-right:58px}.profile-card{grid-template-columns:32.5% 1fr}
 
 .hero-editor + .actions .btn:nth-child(-n+2){min-width:180px}.hero-editor + .actions .btn:nth-child(3){min-width:136px}
+.currency-input{position:relative;display:block;width:100%}.currency-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}.field .currency-input input{width:100%;padding-left:44px}
