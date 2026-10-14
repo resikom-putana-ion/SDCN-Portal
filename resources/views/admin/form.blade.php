@@ -1,7 +1,14 @@
 @extends('layouts.app')
 @section('content')
-@if($screen==='pengaturan')<div class="tabs"><a class="active" href="/admin/pengaturan">Profil sekolah</a><a href="/forgot-password">Keamanan</a><a href="/admin/alat">Integrasi</a><a href="/admin/bahasa">Preferensi</a></div>@endif
+@php($showAdminProfile = $screen === 'pengaturan' && request('tab') !== 'sekolah')
 @if($screen==='pengaturan')
+<nav class="tabs" aria-label="Pengaturan sekolah">
+    <a class="{{ $showAdminProfile ? 'active' : '' }}" href="/admin/pengaturan" @if($showAdminProfile) aria-current="page" @endif>Profil admin sekolah</a>
+    <a class="{{ !$showAdminProfile ? 'active' : '' }}" href="/admin/pengaturan?tab=sekolah" @if(!$showAdminProfile) aria-current="page" @endif>Profil sekolah</a>
+    <a href="/forgot-password">Keamanan</a><a href="/admin/alat">Integrasi</a><a href="/admin/bahasa">Preferensi</a>
+</nav>
+@endif
+@if($showAdminProfile)
 <x-card title="Profil admin sekolah">
 <form method="post" action="/admin/profil-admin">@csrf
 <div class="form-grid">
@@ -12,7 +19,8 @@
 <div class="actions"><button class="btn">Simpan profil admin</button></div>
 </form>
 </x-card>
-@endif
+@else
 <x-card :title="$screen==='pengaturan'?'Identitas SD Ceria Nusantara':'Informasi '.mb_strtolower($titleForm)"><form method="post" action="/admin/record/{{ $kind }}{{ $record?'/'.$record->id:'' }}">@csrf<x-fields :fields="$fields" :values="$record?->data ?? []" :live-nominal="$kind === 'invoices'" :capital-name="in_array($kind, ['students', 'staff'])"/>@if(in_array($kind, ['students', 'staff']))<x-student-photo :record="$record" :staff="$kind === 'staff'"/>@endif
-@if($kind==='settings')<p class="muted" style="margin-bottom:24px">Kontak dan alamat disalin ke draf website. Tinjau dan terbitkan agar perubahan tampil pada website sekolah.</p>@endif<div class="actions"><button class="btn">{{ __('Simpan perubahan') }}</button><a class="btn secondary" href="/admin/{{ $screen }}">{{ __('Batal') }}</a></div></form></x-card>
+@if($kind==='settings')<p class="muted" style="margin-bottom:24px">Kontak dan alamat disalin ke draf website. Tinjau dan terbitkan agar perubahan tampil pada website sekolah.</p>@endif<div class="actions"><button class="btn">{{ __('Simpan perubahan') }}</button><a class="btn secondary" href="/admin/{{ $screen }}{{ $screen === 'pengaturan' ? '?tab=sekolah' : '' }}">{{ __('Batal') }}</a></div></form></x-card>
+@endif
 @endsection

@@ -12,6 +12,14 @@ use Illuminate\Support\Facades\Hash;
 class User extends GenericUser implements CanResetPasswordContract
 {
     use CanResetPassword, Notifiable;
+
+    public const ROLES = ['owner' => 'Owner', 'admin' => 'Admin'];
+
+    public function isOwner(): bool
+    {
+        return $this->role === 'owner';
+    }
+
     private string $rememberCookieToken = '';
     // The stored token is hashed; issue a fresh raw cookie token for each login.
     public function getRememberToken() { return $this->rememberCookieToken; }

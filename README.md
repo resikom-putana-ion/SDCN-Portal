@@ -39,6 +39,7 @@ Pada komputer ini Composer juga tersedia sebagai `php .tools/composer.phar`. Fol
 ## Alur yang tersedia
 
 - Autentikasi admin, keluar akun, reset kata sandi melalui Laravel, pengalihan bahasa navigasi, pencarian, dan tema.
+- Pengaturan → Pengguna & izin: Owner dapat menambahkan akun Owner/Admin serta mengubah nama, role, dan status aktif. Admin hanya dapat melihat daftar akun. Akun nonaktif ditolak saat login maupun saat sesi dimuat kembali; minimal satu Owner aktif harus tetap tersedia. Email login akun yang sudah ada tetap, dan pengguna dapat memakai alur lupa kata sandi untuk mengganti kata sandinya.
 - Daftar, detail, edit, pencarian, filter, ekspor CSV, dan dokumen privat siswa/guru/staf. Kartu identitas dapat dicetak.
 - PPDB publik mengirim data anak/wali dan tiga berkas privat. Admin memeriksa pendaftar, menyelesaikan checklist dokumen asli serta pembayaran offline, lalu mengaktifkan siswa. Aktivasi berulang tidak membuat siswa atau pembayaran ganda.
 - Tagihan menghitung sisa dari pembayaran terverifikasi. Pencatatan menolak referensi ganda dan kelebihan bayar. Verifikasi menyimpan catatan, petugas, dan waktu pemeriksaan. Kuitansi terverifikasi serta rapor dengan nilai berstatus Terbit dapat diunduh sebagai PDF.
@@ -72,7 +73,7 @@ Angka ringkasan seperti 360 siswa, 28 guru/staf, grafik kehadiran, jadwal/cuti c
 
 Pembayaran Virtual Account pada seeder adalah contoh tampilan. Payment gateway, WhatsApp, dan pengiriman email eksternal belum dikonfigurasi. `MAIL_MAILER=log` menulis pesan reset ke `storage/logs/laravel.log`; isi konfigurasi SMTP untuk pengiriman email sesungguhnya. Tidak ada pesan yang dikirim melalui WhatsApp dari aplikasi ini.
 
-Bahasa Inggris tersedia untuk navigasi dan label umum; teks isi sekolah serta sebagian formulir tetap dalam bahasa Indonesia sesuai desain. Halaman pengguna menampilkan akun/role yang tersimpan; editor matriks izin dan portal peran lain belum tersedia. Modul penggajian, perpustakaan, sertifikat, integrasi eksternal, dan pengelolaan cuti penuh masih tercatat sebagai usulan audit.
+Bahasa Inggris tersedia untuk navigasi dan label umum; teks isi sekolah serta sebagian formulir tetap dalam bahasa Indonesia sesuai desain. Pengelolaan akun mendukung role Owner dan Admin; editor matriks izin dan portal peran lain belum tersedia. Modul penggajian, perpustakaan, sertifikat, integrasi eksternal, dan pengelolaan cuti penuh masih tercatat sebagai usulan audit.
 
 Aplikasi berjalan lokal dan belum dideploy ke hosting. Untuk lingkungan produksi gunakan akun/data sebenarnya, kredensial service account yang dikelola dengan aman, konfigurasi layanan email, `APP_ENV=production`, `APP_DEBUG=false`, serta document root ke `public/`. Jangan menjalankan impor data contoh pada produksi tanpa pemeriksaan dan persetujuan.
 

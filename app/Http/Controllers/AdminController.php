@@ -50,7 +50,7 @@ class AdminController extends Controller
 
             return view('admin.list', $shared + compact('records'));
         }
-        $special = ['periode' => ['Periode & Kuota PPDB', 'admissions'], 'pembayaran' => ['Pembayaran', 'finance'], 'website' => ['Kelola Website Sekolah', 'website'], 'halaman' => ['Halaman & Bagian', 'website'], 'media' => ['Media Website', 'website'], 'publikasi' => ['Tinjauan & Publikasi', 'website'], 'pengaturan' => ['Pengaturan Sekolah', 'settings'], 'pengguna' => ['Pengguna & Izin', 'settings'], 'laporan' => ['Laporan Sekolah', 'reports'], 'bahasa' => ['Bahasa Dashboard', ''], 'notifikasi' => ['Notifikasi', ''], 'audit' => ['Audit Admin · Usulan penyederhanaan', 'settings'], 'kenaikan' => ['Kenaikan Kelas & Kelulusan', 'school'], 'aktivasi' => ['Siswa Berhasil Diaktifkan', 'admissions'], 'cari' => ['Hasil Pencarian', ''], 'terbit' => ['Perubahan Website Diterbitkan', 'website']];
+        $special = ['periode' => ['Periode & Kuota PPDB', 'admissions'], 'pembayaran' => ['Pembayaran', 'finance'], 'website' => ['Kelola Website Sekolah', 'website'], 'halaman' => ['Halaman & Bagian', 'website'], 'media' => ['Media Website', 'website'], 'publikasi' => ['Tinjauan & Publikasi', 'website'], 'pengaturan' => ['Pengaturan Sekolah', 'settings'], 'laporan' => ['Laporan Sekolah', 'reports'], 'bahasa' => ['Bahasa Dashboard', ''], 'notifikasi' => ['Notifikasi', ''], 'audit' => ['Audit Admin · Usulan penyederhanaan', 'settings'], 'kenaikan' => ['Kenaikan Kelas & Kelulusan', 'school'], 'aktivasi' => ['Siswa Berhasil Diaktifkan', 'admissions'], 'cari' => ['Hasil Pencarian', ''], 'terbit' => ['Perubahan Website Diterbitkan', 'website']];
         abort_unless(isset($special[$screen]), 404);
         [$title,$group] = $special[$screen];
         $shared += compact('title', 'group', 'id');
@@ -165,7 +165,7 @@ class AdminController extends Controller
         });
         $screen = collect($cfg['pages'])->search(fn ($p) => $p[2] === $kind) ?: ($kind === 'period' ? 'periode' : 'pengaturan');
 
-        return redirect(in_array($kind, ['students', 'staff']) ? '/admin/'.$screen.'/'.$record->id : '/admin/'.$screen)->with('success', 'Perubahan berhasil disimpan.');
+        return redirect(in_array($kind, ['students', 'staff']) ? '/admin/'.$screen.'/'.$record->id : '/admin/'.$screen.($kind === 'settings' ? '?tab=sekolah' : ''))->with('success', 'Perubahan berhasil disimpan.');
     }
 
     public function studentPhoto(SchoolRecord $record)

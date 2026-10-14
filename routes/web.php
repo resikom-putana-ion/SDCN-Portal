@@ -4,7 +4,9 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\SchoolAdmin;
+use App\Http\Middleware\SchoolOwner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +33,13 @@ Route::get('/ppdb/berhasil', fn () => session()->has('registration') ? view('pub
 
 Route::middleware(['auth', SchoolAdmin::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/pengguna', [UserManagementController::class, 'index']);
+    Route::middleware(SchoolOwner::class)->group(function () {
+        Route::get('/pengguna/baru', [UserManagementController::class, 'create']);
+        Route::post('/pengguna', [UserManagementController::class, 'store']);
+        Route::get('/pengguna/{account}/edit', [UserManagementController::class, 'edit']);
+        Route::put('/pengguna/{account}', [UserManagementController::class, 'update']);
+    });
     Route::post('/profil-admin', [\App\Http\Controllers\AdminProfileController::class, 'save']);
     Route::get('/foto-admin', [\App\Http\Controllers\AdminProfileController::class, 'photo']);
     Route::get('/export/{kind}', [AdminController::class, 'export']);
