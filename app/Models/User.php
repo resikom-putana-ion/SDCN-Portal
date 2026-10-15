@@ -13,11 +13,21 @@ class User extends GenericUser implements CanResetPasswordContract
 {
     use CanResetPassword, Notifiable;
 
-    public const ROLES = ['owner' => 'Owner', 'admin' => 'Admin'];
+    public const ROLES = [
+        'owner' => 'Owner',
+        'admin' => 'Admin',
+        'keuangan' => 'Keuangan',
+        'akademik' => 'Akademik',
+    ];
 
     public function isOwner(): bool
     {
         return $this->role === 'owner';
+    }
+
+    public function hasFullSchoolAccess(): bool
+    {
+        return in_array($this->role, ['owner', 'admin'], true);
     }
 
     private string $rememberCookieToken = '';

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 @php($canManage = auth()->user()->isOwner())
-<x-notice>Owner memiliki akses penuh ke sekolah, website, dan pengelolaan akun. Admin dapat mengelola sekolah dan website. Penambahan akun serta perubahan role dan status dikelola oleh Owner.</x-notice>
+<x-notice>Owner memiliki akses penuh dan mengelola akun. Admin mengelola seluruh operasional sekolah. Keuangan dan Akademik hanya melihat bidangnya masing-masing. Penambahan akun serta perubahan role dan status dikelola oleh Owner.</x-notice>
 <div class="filters">
     <p class="muted">{{ $users->count() }} akun pengguna</p>
     @if($canManage)<a class="btn" href="/admin/pengguna/baru">Tambah akun</a>@endif
@@ -19,7 +19,7 @@
                 <td>{{ $user->name }}@if((string) $user->id === (string) auth()->id()) <small class="muted">(Anda)</small>@endif</td>
                 <td>{{ $user->email }}</td>
                 <td>{{ $roles[$user->role] ?? ucfirst($user->role) }}</td>
-                <td>{{ $user->isOwner() ? 'Sekolah, website & akun' : ($user->role === 'admin' ? 'Sekolah & website' : 'Akses terbatas') }}</td>
+                <td>{{ match($user->role) {'owner'=>'Seluruh fitur & akun','admin'=>'Seluruh operasional sekolah','keuangan'=>'Tagihan, pembayaran & kas','akademik'=>'Siswa, kelas, nilai & rapor',default=>'Akses terbatas'} }}</td>
                 <td>{{ $user->updated_at ? \App\Support\School::date($user->updated_at) : '—' }}</td>
                 <td><x-badge :value="$user->active ? 'Aktif' : 'Nonaktif'"/></td>
                 @if($canManage)<td><a href="/admin/pengguna/{{ $user->id }}/edit" aria-label="Kelola akun {{ $user->name }}">Kelola</a></td>@endif

@@ -65,6 +65,14 @@ npx playwright install chromium
 npm run test:browser
 ```
 
+Pemeriksaan crop foto memakai halaman Blade dan data memori terisolasi tanpa mengakses Firestore:
+
+```powershell
+npm run test:crop
+```
+
+Editor crop grid digunakan untuk foto admin, siswa, guru/staf, gambar CMS/media, dan pasfoto PPDB. Bingkai bisa digeser dan ditarik dari sudutnya; zoom mendukung roda mouse, pinch, tombol, serta keyboard. Foto profil disimpan sebagai JPEG 512 × 512, pasfoto PPDB memakai rasio 3:4, dan gambar website mendukung rasio asli, bebas, 1:1, 4:3, 16:9, serta 3:4. Gambar unggahan diproses hingga maksimal 1 MB; transparansi PNG/WebP dipertahankan. Foto asli untuk crop dapat dipilih hingga 5 MB.
+
 Skrip memakai Brave jika tersedia pada lokasi standar komputer ini; atau atur `$env:BROWSER_PATH` ke browser Chromium. `$env:APP_TEST_URL` dapat mengubah alamat server. Skrip browser ditujukan untuk lingkungan uji terpisah yang memiliki akun dan data website uji; jangan mengarahkannya ke lingkungan produksi. Skrip hanya membaca data serta menguji formulir tanpa menyimpan perubahan. Hasil dan screenshot disimpan di `storage/app/browser-check/`.
 
 ## Data contoh dan batas integrasi

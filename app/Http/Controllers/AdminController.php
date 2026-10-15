@@ -97,6 +97,7 @@ class AdminController extends Controller
         $cfg = School::config();
         abort_unless(isset($cfg['forms'][$kind]), 404);
         $record = $id ? SchoolRecord::ofKind($kind)->findOrFail($id) : null;
+        abort_if($record?->value('student_record_archived'), 409, 'Arsip siswa tidak dapat diubah. Buat koreksi melalui catatan audit sekolah.');
         $rules = [];
         foreach ($cfg['forms'][$kind] as $field) {
             $name = $field['name'];
@@ -109,7 +110,12 @@ class AdminController extends Controller
                 $rules[$name] .= '|in:'.implode(',', $field['options']);
             }
             if ($type === 'student') {
-                $rules[$name] = ['required', 'string', function ($attribute, $value, $fail) { if (!SchoolRecord::ofKind('students')->find($value)) $fail('Siswa tidak ditemukan.'); }];
+                $rules[$name] = ['required', 'string', function ($attribute, $value, $fail) use ($record) {
+                    $student = SchoolRecord::ofKind('students')->find($value);
+                    if (!$student) $fail('Siswa tidak ditemukan.');
+                    elseif ($student->value('deletion_plan')) $fail('Siswa sedang dihapus.');
+                    elseif ($student->value('status') !== 'Aktif' && (string) $record?->value('student_id') !== $value) $fail('Pilih siswa aktif untuk pencatatan baru.');
+                }];
             }
         }
         if ($kind === 'grades') {
@@ -141,12 +147,30 @@ class AdminController extends Controller
             return back()->withErrors(['amount' => 'Tagihan dengan pembayaran tidak dapat diubah.']);
         }
         $status = match ($kind) {
-            'news' => 'Draf','students','staff','classes' => 'Aktif','announcements' => 'Terbit','transactions' => 'Selesai',default => $data['status'] ?? $record?->value('status', '') ?? ''
+            'students' => $record?->value('status', 'Aktif') ?? 'Aktif',
+            'news' => 'Draf','staff','classes' => 'Aktif','announcements' => 'Terbit','transactions' => 'Selesai',default => $data['status'] ?? $record?->value('status', '') ?? ''
         };
         $data = [...($record?->data ?? []), ...$data, 'author' => auth()->user()->name, 'status' => $status];
         $code = $data['nis'] ?? $data['employee_id'] ?? $record?->code ?? strtoupper($kind).'-'.Str::uuid();
         $record ??= new SchoolRecord(['kind' => $kind]);
         DB::transaction(function () use ($record, $code, $data, $kind, $photo) {
+            $fresh = null;
+            if ($record->id) {
+                $fresh = SchoolRecord::ofKind($kind)->findOrFail($record->id);
+                abort_if($fresh->value('deletion_plan'), 409, 'Penghapusan siswa sedang berlangsung.');
+                if ($kind === 'students') {
+                    foreach (['status', 'status_changed_at', 'status_changed_by'] as $key) {
+                        if (array_key_exists($key, $fresh->data)) $data[$key] = $fresh->data[$key];
+                    }
+                }
+            }
+            if (isset($data['student_id'])) {
+                $student = SchoolRecord::ofKind('students')->findOrFail($data['student_id']);
+                abort_if($student->value('deletion_plan'), 409, 'Penghapusan siswa sedang berlangsung.');
+                if ($student->value('status') !== 'Aktif' && (string) ($fresh?->value('student_id') ?? '') !== (string) $data['student_id']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['student_id' => 'Pilih siswa aktif untuk pencatatan baru.']);
+                }
+            }
             if ($photo) {
                 $path = ($kind === 'staff' ? 'staff-photos/' : 'student-photos/').Str::uuid().'.jpg';
                 app(\App\Services\FirestoreFileStorage::class)->put($path, base64_decode(substr($photo, 23), true), 'image/jpeg');

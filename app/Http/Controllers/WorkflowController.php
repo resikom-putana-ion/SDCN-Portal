@@ -109,7 +109,7 @@ class WorkflowController extends Controller
         $payment = DB::table('school_payments')->where('status', 'Terverifikasi')->find($id);
         abort_unless($payment, 404);
         $invoice = SchoolRecord::findOrFail($payment->invoice_id);
-        $student = SchoolRecord::find($invoice->value('student_id'));
+        $student = School::invoiceStudent($invoice);
 
         return view('admin.receipt', ['title' => 'Kuitansi Pembayaran', 'group' => 'finance', 'screen' => 'pembayaran', 'payment' => $payment, 'invoice' => $invoice, 'student' => $student]);
     }
@@ -128,7 +128,7 @@ class WorkflowController extends Controller
         $payment = DB::table('school_payments')->where('status', 'Terverifikasi')->find($id);
         abort_unless($payment, 404);
         $invoice = SchoolRecord::ofKind('invoices')->findOrFail($payment->invoice_id);
-        $student = SchoolRecord::ofKind('students')->findOrFail($invoice->value('student_id'));
+        $student = School::invoiceStudent($invoice);
 
         return PdfDocument::download('pdf.receipt', compact('payment', 'invoice', 'student'), $payment->reference.'.pdf');
     }
@@ -139,6 +139,18 @@ class WorkflowController extends Controller
         $grades = SchoolRecord::ofKind('grades')->where('data->student_id', $record->id)->where('data->status', 'Terbit')->get();
 
         return PdfDocument::download('pdf.report', compact('record', 'grades'), 'Rapor-'.$record->code.'.pdf');
+    }
+
+    public function archivedReportPdf(SchoolRecord $record)
+    {
+        abort_unless($record->kind === 'student_deletions', 404);
+        $grades = SchoolRecord::ofKind('grades')->where('data->student_snapshot.nis', $record->code)->where('data->status', 'Terbit')->get();
+        abort_if($grades->isEmpty(), 404);
+        $snapshot = $grades->first()->value('student_snapshot');
+        abort_unless(is_array($snapshot), 404);
+        $record = new SchoolRecord(['kind' => 'archived_students', 'code' => $record->code, 'data' => $snapshot]);
+
+        return PdfDocument::download('pdf.report', compact('record', 'grades'), 'Rapor-Arsip-'.$record->code.'.pdf');
     }
 
     public function document(string $id, \App\Services\FirestoreFileStorage $files)
@@ -156,6 +168,8 @@ class WorkflowController extends Controller
         $file = $request->file('document');
         $path = 'dashboard-documents/'.\Illuminate\Support\Str::uuid().'.'.$file->extension();
         DB::transaction(function () use ($record, $request, $file, $path, $files) {
+            $record = SchoolRecord::ofKind($record->kind)->findOrFail($record->id);
+            abort_if($record->value('deletion_plan'), 409, 'Penghapusan siswa sedang berlangsung.');
             $files->putUploadedFile($path, $file);
             DB::table('school_documents')->insert(['record_id' => $record->id, 'name' => $request->name.'.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now()]);
             School::log('Mengunggah dokumen '.$record->code, 'Dokumen', 'Tersimpan');
@@ -174,7 +188,7 @@ class WorkflowController extends Controller
     {
         $data = $request->validate(['from' => 'required|string', 'to' => 'required|string|different:from', 'year' => 'required|regex:/^\d{4}\/\d{4}$/', 'confirm' => 'accepted']);
         $count = DB::transaction(function () use ($data) {
-            $students = SchoolRecord::ofKind('students')->where('data->class', $data['from'])->lockForUpdate()->get();
+            $students = SchoolRecord::ofKind('students')->where('data->class', $data['from'])->where('data->status', 'Aktif')->lockForUpdate()->get();
             foreach ($students as $student) {
                 $student->update(['data' => [...$student->data, 'class' => $data['to'], 'year' => $data['year'], 'status' => $data['to'] === 'Lulus' ? 'Lulus' : $student->value('status')]]);
             }

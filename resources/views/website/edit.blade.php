@@ -10,11 +10,11 @@
 @foreach($fields as $key=>$value)
 @if(!is_array($value))
 @php($imageField=(bool)preg_match('/(^image$|_image$|^logo$|\.photo$)/',$key))
-<label class="field">{{ \App\Services\ContentLabels::label($key) }}
+<label class="field" @if($imageField) data-crop-field @endif>{{ \App\Services\ContentLabels::label($key) }}
 @if($imageField)
-<img src="{{ \App\Services\WebsiteContent::image((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" style="max-width:260px;height:150px;object-fit:cover;border-radius:12px">
+<img data-crop-preview src="{{ \App\Services\WebsiteContent::image((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" style="max-width:260px;height:150px;object-fit:cover;border-radius:12px">
 <input name="values[{{ $key }}]" value="{{ old('values')[$key] ?? $value }}" aria-label="Lokasi gambar {{ \App\Services\ContentLabels::label($key) }}">
-<input type="file" name="uploads[{{ $loop->index }}]" accept=".jpg,.jpeg,.png,.webp"><small>Unggah gambar pengganti, maksimal 1 MB.</small>
+<input type="file" name="uploads[{{ $loop->index }}]" accept=".jpg,.jpeg,.png,.webp" data-crop-input><small>Pilih gambar pengganti maksimal 5 MB, lalu atur potongan pada grid.</small>
 @elseif(is_bool($value))<select name="values[{{ $key }}]"><option value="1" @selected($value)>Ya</option><option value="0" @selected(!$value)>Tidak</option></select>
 @elseif(mb_strlen((string)$value)>100 || str_contains((string)$value,"\n"))<textarea name="values[{{ $key }}]" rows="4" maxlength="10000">{{ old('values')[$key] ?? $value }}</textarea>
 @else<input name="values[{{ $key }}]" value="{{ old('values')[$key] ?? $value }}" maxlength="10000">

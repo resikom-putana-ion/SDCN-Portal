@@ -123,7 +123,7 @@ class UserManagementController extends Controller
         return [
             'name.required' => 'Nama wajib diisi.', 'name.max' => 'Nama maksimal 150 karakter.',
             'email.required' => 'Email wajib diisi.', 'email.email' => 'Masukkan alamat email yang valid.',
-            'role.required' => 'Pilih role akun.', 'role.in' => 'Role yang tersedia adalah Owner dan Admin.',
+            'role.required' => 'Pilih role akun.', 'role.in' => 'Role yang tersedia adalah '.implode(', ', array_values(User::ROLES)).'.',
             'active.required' => 'Pilih status akun.', 'active.boolean' => 'Status akun tidak valid.',
             'password.required' => 'Kata sandi wajib diisi.', 'password.min' => 'Kata sandi minimal 8 karakter.',
             'password.max' => 'Kata sandi maksimal 72 karakter.', 'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',

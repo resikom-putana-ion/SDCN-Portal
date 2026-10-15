@@ -43,6 +43,27 @@ class School
         return [...$record->data, 'paid' => $paid, 'balance' => $balance, 'status' => $balance === 0 ? 'Lunas' : ($paid > 0 ? 'Sebagian' : 'Belum dibayar')];
     }
 
+    public static function invoiceStudent(SchoolRecord $invoice): SchoolRecord
+    {
+        $studentId = $invoice->value('student_id');
+        if ($studentId !== '' && $studentId !== null) {
+            $student = SchoolRecord::ofKind('students')->find($studentId);
+            if ($student) {
+                return $student;
+            }
+        }
+        $snapshot = $invoice->value('student_snapshot');
+        if (! is_array($snapshot)) {
+            $snapshot = ['name' => $invoice->value('name'), 'guardian' => '', 'class' => $invoice->value('class'), 'year' => $invoice->value('period')];
+        }
+
+        return new SchoolRecord([
+            'kind' => 'archived_students',
+            'code' => $snapshot['nis'] ?? 'Arsip siswa',
+            'data' => $snapshot,
+        ]);
+    }
+
     public static function content(bool $draft = false): array
     {
         return app(\App\Services\WebsiteContent::class)->all($draft);
@@ -59,7 +80,9 @@ class School
 
     public static function metric(string $kind, int $baseline, int $seed): int
     {
-        return SchoolRecord::ofKind($kind)->count();
+        $records = SchoolRecord::ofKind($kind);
+        if ($kind === 'students') $records->where('data->status', 'Aktif');
+        return $records->count();
     }
 
     public static function badge(string $status): string

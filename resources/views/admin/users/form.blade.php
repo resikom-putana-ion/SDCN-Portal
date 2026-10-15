@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<x-notice>Owner dapat mengelola seluruh fitur, termasuk akun pengguna. Admin dapat mengelola operasional sekolah dan website.</x-notice>
+<x-notice>Owner mengelola seluruh fitur dan akun. Admin mengelola seluruh operasional sekolah. Keuangan hanya menangani tagihan, pembayaran, kas, dan laporan keuangan. Akademik menangani siswa, guru, kelas, absensi, nilai, dan rapor.</x-notice>
 <x-card :title="$account ? 'Informasi & akses akun' : 'Akun pengguna baru'">
     <form method="post" action="{{ $account ? '/admin/pengguna/'.$account->id : '/admin/pengguna' }}" @if($account) data-confirm="Simpan perubahan nama, role, dan status akun ini?" @endif>
         @csrf
@@ -24,6 +24,7 @@
                 <select id="account-role" name="role" required>
                     @foreach($roles as $value => $label)<option value="{{ $value }}" @selected(old('role', $account?->role ?? 'admin') === $value)>{{ $label }}</option>@endforeach
                 </select>
+                <small class="muted">Menu dan URL dibatasi otomatis sesuai role.</small>
             </div>
             <div class="field">
                 <label for="account-active">Status akun</label>

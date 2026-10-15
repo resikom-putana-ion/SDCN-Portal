@@ -16,7 +16,7 @@ $school=\App\Support\School::class;
 <form class="filters" data-filter-form method="get"><label class="search-field"><x-icon name="search"/><input name="q" value="{{ request('q') }}" placeholder="{{ in_array($screen,['pendaftar','daftar-ulang'])?'Cari anak, wali, nomor daftar...':($screen==='guru'?'Cari nama atau ID pegawai...':'Cari nama atau nomor induk...') }}" aria-label="Cari data"></label>
 @php
 $options=match($kind){
-    'students'=>['Semua kelas',...\App\Models\SchoolRecord::ofKind('students')->get()->pluck('data.class')->filter()->unique()->sort()->values()->all()],
+    'students'=>['Semua siswa','Aktif','Nonaktif',...\App\Models\SchoolRecord::ofKind('students')->get()->pluck('data.class')->filter()->unique()->sort()->values()->all()],
     'staff'=>['Semua jabatan',...\App\Models\SchoolRecord::ofKind('staff')->get()->pluck('data.position')->filter()->unique()->sort()->values()->all()],
     'invoices'=>['Semua status','Belum dibayar','Sebagian','Lunas'],
     'applicants'=>['Semua status','Pemeriksaan','Lolos administrasi','Menunggu daftar ulang','Siap diaktifkan','Perlu perbaikan','Aktif'],
@@ -31,7 +31,15 @@ $years=\App\Models\SchoolRecord::whereIn('kind',[$kind,'students','period','sett
 @if(request('tab'))<input type="hidden" name="tab" value="{{ request('tab') }}">@endif
 @if($create)<a class="btn" href="{{ $screen==='kelas'?'/admin/kenaikan':'/admin/'.$screen.'/baru' }}">{{ __($create) }}</a>@endif</form>@endif
 @php
-$rows=$records->map(function($r)use($kind,$screen){$data=$kind==='invoices'?\App\Support\School::invoice($r):$r->data; return [...$data,'_url'=>in_array($kind,['tools','activities'])?null:'/admin/'.$screen.'/'.$r->id];});
+$rows=$records->map(function($r)use($kind,$screen){
+    $data=$kind==='invoices'?\App\Support\School::invoice($r):$r->data;
+    $url=in_array($kind,['tools','activities'])?null:'/admin/'.$screen.'/'.$r->id;
+    if($kind==='grades' && $r->value('student_record_archived')){
+        $archive=\App\Models\SchoolRecord::ofKind('student_deletions')->where('code',$r->value('student_snapshot.nis'))->first();
+        $url=$archive?'/admin/rapor-arsip/'.$archive->id.'/pdf':null;
+    }
+    return [...$data,'_url'=>$url];
+});
 if($screen==='nilai' && request('tab')==='perkembangan') $columns=['name'=>'Siswa','class'=>'Kelas','notes'=>'Perkembangan & catatan wali kelas','author'=>'Wali kelas'];
 if($screen==='nilai' && request('tab')==='ujian') $columns=['name'=>'Siswa','subject'=>'Mata pelajaran','semester'=>'Semester','score'=>'Nilai','status'=>'Status'];
 @endphp

@@ -1,11 +1,16 @@
 @extends('layouts.app')
 @section('content')
-@php($showAdminProfile = $screen === 'pengaturan' && request('tab') !== 'sekolah')
+@php
+$showAdminProfile = $screen === 'pengaturan' && request('tab') !== 'sekolah';
+$fullAccess = \App\Support\SchoolAccess::hasFullAccess(auth()->user());
+@endphp
 @if($screen==='pengaturan')
 <nav class="tabs" aria-label="Pengaturan sekolah">
     <a class="{{ $showAdminProfile ? 'active' : '' }}" href="/admin/pengaturan" @if($showAdminProfile) aria-current="page" @endif>Profil admin sekolah</a>
+    @if($fullAccess)
     <a class="{{ !$showAdminProfile ? 'active' : '' }}" href="/admin/pengaturan?tab=sekolah" @if(!$showAdminProfile) aria-current="page" @endif>Profil sekolah</a>
-    <a href="/forgot-password">Keamanan</a><a href="/admin/alat">Integrasi</a><a href="/admin/bahasa">Preferensi</a>
+    @endif
+    <a href="/forgot-password">Keamanan</a>@if($fullAccess)<a href="/admin/alat">Integrasi</a>@endif<a href="/admin/bahasa">Preferensi</a>
 </nav>
 @endif
 @if($showAdminProfile)

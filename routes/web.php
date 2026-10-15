@@ -5,8 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\StudentLifecycleController;
 use App\Http\Middleware\SchoolAdmin;
 use App\Http\Middleware\SchoolOwner;
+use App\Http\Middleware\SchoolRoleAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,7 +33,7 @@ Route::get('/ppdb', [WebsiteController::class, 'application']);
 Route::post('/ppdb', [WebsiteController::class, 'submitApplication'])->middleware('throttle:5,1');
 Route::get('/ppdb/berhasil', fn () => session()->has('registration') ? view('public.success') : redirect('/ppdb'));
 
-Route::middleware(['auth', SchoolAdmin::class])->prefix('admin')->group(function () {
+Route::middleware(['auth', SchoolAdmin::class, SchoolRoleAccess::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/pengguna', [UserManagementController::class, 'index']);
     Route::middleware(SchoolOwner::class)->group(function () {
@@ -48,6 +50,9 @@ Route::middleware(['auth', SchoolAdmin::class])->prefix('admin')->group(function
     Route::get('/identitas/{record}', [WorkflowController::class, 'identity']);
     Route::get('/foto-siswa/{record}', [AdminController::class, 'studentPhoto']);
     Route::get('/foto-guru/{record}', [AdminController::class, 'staffPhoto']);
+    Route::post('/siswa/{record}/status', [StudentLifecycleController::class, 'status']);
+    Route::get('/siswa/{record}/hapus', [StudentLifecycleController::class, 'confirmDelete']);
+    Route::delete('/siswa/{record}', [StudentLifecycleController::class, 'destroy']);
     Route::post('/record/{kind}/{id?}', [AdminController::class, 'save']);
     Route::post('/ppdb/{record}/review', [WorkflowController::class, 'review']);
     Route::post('/ppdb/{record}/offline', [WorkflowController::class, 'offline']);
@@ -56,6 +61,7 @@ Route::middleware(['auth', SchoolAdmin::class])->prefix('admin')->group(function
     Route::get('/kuitansi/{id}', [WorkflowController::class, 'receipt']);
     Route::get('/kuitansi/{id}/pdf', [WorkflowController::class, 'receiptPdf']);
     Route::get('/rapor/{record}/pdf', [WorkflowController::class, 'reportPdf']);
+    Route::get('/rapor-arsip/{record}/pdf', [WorkflowController::class, 'archivedReportPdf']);
     Route::get('/periksa-pembayaran/{id}', [WorkflowController::class, 'inspectPayment']);
     Route::post('/kenaikan-kelas', [WorkflowController::class, 'promotion']);
     Route::post('/website/media', [WebsiteController::class, 'upload']);
