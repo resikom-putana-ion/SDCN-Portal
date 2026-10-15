@@ -4,6 +4,8 @@ Implementasi Laravel dari paket desain A01–A08, W01–W05, dan Z01. Tata letak
 
 ## Jalankan di komputer ini
 
+Cara tanpa mengetik perintah: buka folder proyek di File Explorer, lalu klik dua kali **run.bat**. Biarkan jendela server terbuka selama website dipakai, lalu buka http://127.0.0.1:8017/login di browser. Hentikan dengan Ctrl+C. Jalankan satu server saja pada port 8017.
+
 Dari `E:\Admin Dashboard SDCN`:
 
 ```powershell

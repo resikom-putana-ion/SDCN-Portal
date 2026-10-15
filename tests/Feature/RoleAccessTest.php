@@ -9,6 +9,20 @@ use Tests\Support\CloudTestCase;
 
 class RoleAccessTest extends CloudTestCase
 {
+    public function test_finance_and_academic_accounts_can_log_in_to_their_own_dashboard(): void
+    {
+        foreach (['keuangan' => 'Keuangan', 'akademik' => 'Akademik'] as $role => $label) {
+            $user = $this->roleUser($role);
+            $this->post('/login', ['email' => $user->email, 'password' => 'Rahasia2026!'])
+                ->assertRedirect('/admin')->assertSessionHasNoErrors();
+            $this->assertAuthenticatedAs($user);
+            $this->get('/admin')->assertOk()->assertSee('role '.$label);
+            $this->get('/admin/pengguna')->assertForbidden();
+            $this->post('/logout')->assertRedirect('/login');
+            $this->assertGuest();
+        }
+    }
+
     public function test_finance_role_only_sees_and_opens_finance_features(): void
     {
         $this->actingAs($this->roleUser('keuangan'));
