@@ -1,49 +1,61 @@
-# Pemulihan akun melalui Gmail
+# Login dan pemulihan akun melalui Firebase Authentication
 
-Halaman `/forgot-password` mengirim tautan untuk membuat kata sandi baru. Berlaku untuk akun Owner, Admin, Keuangan, dan Akademik yang aktif. Ini adalah alur reset kata sandi; setelah sandi diperbarui, pengguna masuk melalui `/login`.
+Firebase Authentication memverifikasi kata sandi dan mengirim email pemulihan. Pengguna tidak perlu membuat App Password Gmail atau menjalankan `setup-email.bat`. Aplikasi menggunakan Firebase Auth REST API di server; API key, service account, ID token, dan refresh token tidak dimasukkan ke halaman browser.
 
-## Hubungkan email pengirim (satu kali)
+## Pemakaian
 
-1. Masuk ke akun Gmail/Google Workspace yang akan menjadi pengirim email sekolah.
-2. Aktifkan **Verifikasi 2 Langkah**, lalu buat **App Password** dengan nama `Dashboard SDCN` di https://myaccount.google.com/apppasswords. Petunjuk resmi: https://support.google.com/accounts/answer/185833?hl=id. Jika menu tidak tersedia pada Workspace, minta administrator Google Workspace mengizinkan metode ini atau gunakan akun pengirim lain yang mendukungnya.
-3. Klik dua kali **setup-email.bat** di folder proyek. Masukkan alamat Gmail dan App Password 16 karakter. Input password disembunyikan. Spasi pada App Password boleh disertakan. Jangan masukkan kata sandi login Gmail dan jangan mengirimkan App Password ke chat.
-4. Skrip menyimpan konfigurasi di `.env`, membersihkan cache konfigurasi, dan mengirim **email uji ke alamat pengirim sendiri**. Periksa Inbox/Spam. Pesan sukses terminal berarti server Gmail menerima email untuk dikirim; penerimaan di kotak masuk tetap perlu diperiksa.
-5. Hentikan server yang sedang berjalan, lalu jalankan kembali **run.bat**. Buka http://127.0.0.1:8017/forgot-password dan masukkan email **akun dashboard yang terdaftar dan aktif**, bukan sembarang alamat. Email penerima boleh berbeda dari email pengirim Gmail.
-6. Buka email, klik **Buat kata sandi baru**, simpan, lalu login menggunakan kata sandi baru.
+1. Buka `/forgot-password` dan masukkan email akun dashboard yang aktif.
+2. Buka email dari Firebase, termasuk memeriksa folder Spam.
+3. Klik tautan dan buat kata sandi baru di halaman pemulihan yang dihosting Firebase.
+4. Kembali ke `/login` dashboard dan masuk dengan kata sandi baru.
 
-Alternatif dari PowerShell di folder proyek:
+Tautan pemulihan ditangani oleh Firebase, sehingga dapat dibuka di ponsel meskipun dashboard masih berjalan lokal. Untuk membuka dashboard lokal, tetap gunakan komputer yang menjalankan `http://127.0.0.1:8017`. Setelah deploy, buka domain dashboard sekolah.
+
+Pengguna yang tidak terdaftar atau nonaktif mendapat pesan umum yang sama, tetapi aplikasi tidak mengirim email. Permintaan dibatasi satu kali per menit untuk setiap email dan tiga kali per menit untuk setiap IP. Firebase juga menerapkan kuota dan perlindungan penyalahgunaan sendiri.
+
+## Menyiapkan proyek atau server lain
+
+1. Di Firebase Console, pilih proyek sekolah yang sama dengan Firestore.
+2. Aktifkan **Authentication → Sign-in method → Email/Password**. Email link/passwordless tidak diperlukan.
+3. Pasang service account server seperti dijelaskan dalam `docs/FIREBASE.md`. Akun layanan memerlukan izin Firebase Authentication untuk membaca, membuat, mengubah, dan mengimpor pengguna, serta membaca konfigurasi proyek; izin Firestore saja tidak cukup.
+4. Periksa tanpa mengubah akun:
 
 ```powershell
-& 'C:\xampp\php\php.exe' artisan school:setup-gmail
+& 'C:\xampp\php\php.exe' artisan school:firebase-auth
 ```
 
-## Konfigurasi manual
+5. Setelah hasil pemeriksaan sesuai, migrasikan dan aktifkan:
 
-Isi nilai berikut di `.env` (contoh alamat dan password harus diganti):
-
-```dotenv
-MAIL_MAILER=smtp
-MAIL_SCHEME=smtps
-MAIL_URL=null
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=465
-MAIL_USERNAME=alamat-pengirim@gmail.com
-MAIL_PASSWORD=APP_PASSWORD_16_KARAKTER
-MAIL_FROM_ADDRESS=alamat-pengirim@gmail.com
-MAIL_FROM_NAME="${APP_NAME}"
+```powershell
+& 'C:\xampp\php\php.exe' artisan school:firebase-auth --apply
 ```
 
-Gunakan alamat pengirim yang sama dengan akun Gmail untuk autentikasi SMTP. Jalankan `php artisan config:clear` setelah mengubah `.env`, lalu mulai ulang server. Kredensial `.env` tidak boleh dimasukkan ke Git.
+Perintah mengambil Web API Key dari konfigurasi proyek, menulis `FIREBASE_API_KEY` dan `FIREBASE_AUTH_ENABLED=true` ke `.env`, lalu membersihkan cache konfigurasi. Jika server dikelola dengan environment variables, pasang nilai yang sama pada pengaturan server. Mulai ulang proses aplikasi setelah memperbarui konfigurasi pada lingkungan produksi.
 
-`APP_URL` menentukan alamat pada tautan email. Selama nilainya `http://127.0.0.1:8017`, tautan hanya dapat dibuka pada komputer yang menjalankan website. Membuka tautan dari ponsel tidak akan mengarah ke komputer tersebut. Setelah deploy, isi `APP_URL` dengan domain HTTPS dashboard yang bisa diakses pengguna.
+Perintah memindahkan hash bcrypt yang ada tanpa meminta atau mengganti kata sandi pengguna. UID ditautkan pada `admins.firebase_uid`; nama, role, status, foto, dan ID profil sekolah dipertahankan. Hash kata sandi di Firestore dikosongkan setelah identitas di Firebase berhasil diverifikasi. Snapshot akun sebelum migrasi disimpan terenkripsi dalam `storage/app/private/auth-migration/`, memakai `APP_KEY` aplikasi. Jaga akses berkas dan APP_KEY tersebut.
 
-## Perilaku dan pemecahan masalah
+Akun Firebase yang sudah ada dengan email/UID berbeda menyebabkan migrasi berhenti; akun tersebut tidak ditimpa atau otomatis mendapat role sekolah. Migrasi dapat dilanjutkan setelah kegagalan tanpa menimpa kata sandi pengguna yang sudah berhasil dipindahkan. Sesi lama perlu login ulang setelah migrasi.
 
-- Tautan kedaluwarsa setelah 60 menit dan tidak dapat digunakan kembali setelah berhasil. Meminta tautan baru setelah masa tunggu menggantikan tautan sebelumnya.
-- Pengiriman ke akun yang sama dibatasi satu menit, ditambah pembatasan permintaan pada formulir. Akun tidak terdaftar/nonaktif mendapatkan pesan umum yang sama untuk menjaga kerahasiaan daftar akun.
-- Jika SMTP belum dikonfigurasi atau pengiriman gagal, formulir menampilkan pesan gagal. `MAIL_MAILER=log` tidak mengirim email dan tidak lagi dianggap sebagai keberhasilan pemulihan.
-- Jika login Gmail ditolak, periksa App Password, status Verifikasi 2 Langkah, dan kebijakan Workspace. Mengganti kata sandi akun Google dapat mencabut App Password; buat ulang bila perlu.
-- Jika koneksi gagal, periksa internet/firewall port 465 dan konfigurasi sertifikat CA PHP. Jangan menonaktifkan verifikasi TLS.
-- Jika formulir berhasil tetapi email belum masuk, periksa Spam dan gunakan email terakhir. Pengujian otomatis menggunakan transport email memori dan tidak mengirim email sungguhan.
+## Akses dan konsistensi akun
 
-Belum ada email eksternal yang dikirim sampai kredensial pengirim diisi dan pengiriman diuji melalui Gmail.
+- Owner membuat akun dari **Pengaturan → Pengguna & izin**. Role Owner, Admin, Keuangan, dan Akademik tetap ditentukan server melalui Firestore.
+- Memiliki akun Firebase saja tidak cukup untuk masuk dashboard: profil sekolah harus terdaftar, UID/email cocok, dan akun aktif.
+- Nonaktifkan/aktifkan akun dari dashboard agar status sekolah dan Firebase disinkronkan. Jika sinkronisasi gagal, halaman menampilkan pesan dan penyimpanan dapat diulang. Status nonaktif di Firestore langsung menolak akses dashboard.
+- Perubahan kata sandi atau pencabutan sesi Firebase membatalkan sesi dan cookie “Ingat saya” pada pemeriksaan berikutnya. Firebase yang tidak dapat dihubungi menyebabkan akses ditolak sementara, tanpa kembali memeriksa kata sandi lama.
+- Jangan memindahkan email atau menghapus pengguna langsung dari Firebase Console tanpa menyesuaikan profil sekolahnya; ketidakcocokan identitas akan ditolak.
+
+## Pengujian
+
+```powershell
+& 'C:\xampp\php\php.exe' artisan test --compact --filter=FirebaseAuthenticationTest
+```
+
+Pengujian otomatis memakai Firestore memori dan respons HTTP Firebase tiruan, tanpa mengubah akun asli atau mengirim email. Pemeriksaan integrasi langsung menggunakan akun sementara dapat menguji login, impor bcrypt, dan kode reset tanpa mengirim email dengan `returnOobLink=true`; penerimaan email nyata tetap perlu diperiksa dari formulir menggunakan akun milik penguji.
+
+Implementasi SMTP lama masih tersedia untuk instalasi yang belum dimigrasikan. Setelah Firebase Authentication aktif, `setup-email.bat` hanya memberi informasi bahwa konfigurasi Gmail tidak diperlukan. Menonaktifkan flag tidak mengembalikan autentikasi lokal bagi akun yang sudah mempunyai `firebase_uid`.
+
+Referensi resmi:
+
+- https://firebase.google.com/docs/reference/rest/auth
+- https://firebase.google.com/docs/auth/limits
+- https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/projects.accounts/batchCreate

@@ -14,6 +14,10 @@ class SetupGmail extends Command
 
     public function handle(): int
     {
+        if (config('school.firebase_auth_enabled')) {
+            $this->info('Pemulihan akun sudah memakai Firebase Authentication. Setup Gmail tidak diperlukan.');
+            return self::SUCCESS;
+        }
         if (! $this->input->isInteractive()) {
             $this->error('Jalankan di terminal interaktif agar App Password dapat dimasukkan secara tersembunyi.');
 

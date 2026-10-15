@@ -32,7 +32,7 @@ Ketiga pemeriksaan berhasil: akun yang aktif sesuai pilihan, alias mengarah ke p
 
 Folder `E:\Landing Page Website` memiliki `.firebaserc` dengan Project ID yang sama. Berdasarkan kode dan dokumentasi lokal landing page:
 
-- Konten website menggunakan koleksi `content`; akun pengelola menggunakan `admins`.
+- Konten website menggunakan koleksi `content`; profil, role, dan status akun pengelola menggunakan `admins`. Login dan pemulihan kata sandi memakai Firebase Authentication melalui `firebase_uid`; setelah migrasi hash kata sandi tidak lagi disimpan di profil Firestore. Lihat [EMAIL.md](EMAIL.md) untuk migrasi dan pengaturan.
 - Pendaftaran menggunakan `applications`; permintaan kunjungan menggunakan `visits`.
 - Berkas menggunakan `uploaded_files` dan `uploaded_file_chunks`.
 - Laravel mengakses Firestore dari server dengan service account; rules lokal menolak akses browser langsung.

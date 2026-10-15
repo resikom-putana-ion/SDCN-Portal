@@ -70,19 +70,19 @@ class UserManagementController extends Controller
         }
 
         try {
-        CloudData::transaction(function () use ($request, $data, $id, $password, $uid) {
-            $this->authorizeOwner($request);
-            $created = CloudData::store()->create('admins', $id, [
-                'name' => $data['name'], 'email' => $data['email'], 'password' => $password,
-                'role' => $data['role'], 'active' => (bool) $data['active'], 'remember_token' => '',
-                'firebase_uid' => $uid,
-                'created_at' => now()->toIso8601String(), 'updated_at' => now()->toIso8601String(),
-            ]);
-            if (!$created) {
-                throw ValidationException::withMessages(['email' => 'Email ini sudah digunakan oleh akun lain.']);
-            }
-            School::log('Menambahkan akun '.User::ROLES[$data['role']].': '.$data['name'], 'users', 'Tersimpan');
-        });
+            CloudData::transaction(function () use ($request, $data, $id, $password, $uid) {
+                $this->authorizeOwner($request);
+                $created = CloudData::store()->create('admins', $id, [
+                    'name' => $data['name'], 'email' => $data['email'], 'password' => $password,
+                    'role' => $data['role'], 'active' => (bool) $data['active'], 'remember_token' => '',
+                    'firebase_uid' => $uid,
+                    'created_at' => now()->toIso8601String(), 'updated_at' => now()->toIso8601String(),
+                ]);
+                if (!$created) {
+                    throw ValidationException::withMessages(['email' => 'Email ini sudah digunakan oleh akun lain.']);
+                }
+                School::log('Menambahkan akun '.User::ROLES[$data['role']].': '.$data['name'], 'users', 'Tersimpan');
+            });
         } catch (\Throwable $e) {
             // Firebase calls stay outside retried Firestore transactions. Compensate only
             // the account created by this request, never an existing email/UID.

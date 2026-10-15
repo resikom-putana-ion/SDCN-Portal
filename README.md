@@ -19,11 +19,11 @@ Skrip mencari PHP pada PATH atau `C:\xampp\php\php.exe`, menggunakan port **8017
 - Formulir PPDB: http://127.0.0.1:8017/ppdb
 - Masuk memakai akun admin aktif yang sudah tersimpan pada koleksi `admins` di Firestore. Akun demo lokal dinonaktifkan saat impor.
 
-Dashboard tidak menyediakan halaman publik `/website`. Landing page adalah aplikasi terpisah; admin tetap mengedit dan menerbitkan kontennya melalui Firestore. Dashboard, autentikasi, session, cache, konten website, dan rekaman operasional memakai Cloud Firestore pada proyek `sd-ceria-nusantara`, sama dengan landing page. Tidak diperlukan database SQLite lokal. Detail koneksi, struktur koleksi, dan sinkronisasi website tersedia di [docs/FIREBASE.md](docs/FIREBASE.md).
+Dashboard tidak menyediakan halaman publik `/website`. Landing page adalah aplikasi terpisah; admin tetap mengedit dan menerbitkan kontennya melalui Firestore. Firebase Authentication menangani login dan pemulihan kata sandi; role, status akun sekolah, session, cache, konten website, dan rekaman operasional memakai Cloud Firestore pada proyek `sd-ceria-nusantara`, sama dengan landing page. Tidak diperlukan database SQLite lokal. Detail koneksi, struktur koleksi, dan sinkronisasi website tersedia di [docs/FIREBASE.md](docs/FIREBASE.md).
 
 ## Email pemulihan akun
 
-Klik dua kali **setup-email.bat** untuk menghubungkan Gmail/Google Workspace memakai App Password. Skrip meminta kredensial secara lokal dan mengirim email uji ke pengirim. Petunjuk lengkap, konfigurasi manual, dan cara mencoba lupa kata sandi tersedia di [docs/EMAIL.md](docs/EMAIL.md).
+Pemulihan menggunakan **Firebase Authentication** sehingga tidak membutuhkan SMTP atau App Password Gmail. Buka `/forgot-password`, isi email akun aktif, buka tautan email untuk membuat kata sandi baru, lalu kembali login. Petunjuk migrasi, konfigurasi server baru, dan pengujian tersedia di [docs/EMAIL.md](docs/EMAIL.md).
 
 ## Pemasangan awal pada komputer lain
 
@@ -44,8 +44,8 @@ Pada komputer ini Composer juga tersedia sebagai `php .tools/composer.phar`. Fol
 
 ## Alur yang tersedia
 
-- Autentikasi admin, keluar akun, reset kata sandi melalui Laravel, pengalihan bahasa navigasi, pencarian, dan tema.
-- Pengaturan → Pengguna & izin: Owner dapat menambahkan akun Owner/Admin serta mengubah nama, role, dan status aktif. Admin hanya dapat melihat daftar akun. Akun nonaktif ditolak saat login maupun saat sesi dimuat kembali; minimal satu Owner aktif harus tetap tersedia. Email login akun yang sudah ada tetap, dan pengguna dapat memakai alur lupa kata sandi untuk mengganti kata sandinya.
+- Login pengelola dan reset kata sandi melalui Firebase Authentication, keluar akun, pengalihan bahasa navigasi, pencarian, dan tema. Sesi Laravel tetap disimpan di Firestore dan diperiksa ulang ketika kata sandi Firebase berubah.
+- Pengaturan → Pengguna & izin: Owner dapat menambahkan akun Owner/Admin/Keuangan/Akademik serta mengubah nama, role, dan status aktif. Akun baru dibuat di Firebase Authentication dan ditautkan ke profil sekolah di Firestore. Admin hanya dapat melihat daftar akun. Akun nonaktif ditolak saat login maupun saat sesi dimuat kembali; minimal satu Owner aktif harus tetap tersedia. Email login akun yang sudah ada tetap, dan pengguna dapat memakai alur lupa kata sandi untuk mengganti kata sandinya.
 - Daftar, detail, edit, pencarian, filter, ekspor CSV, dan dokumen privat siswa/guru/staf. Kartu identitas dapat dicetak.
 - PPDB publik mengirim data anak/wali dan tiga berkas privat. Admin memeriksa pendaftar, menyelesaikan checklist dokumen asli serta pembayaran offline, lalu mengaktifkan siswa. Aktivasi berulang tidak membuat siswa atau pembayaran ganda.
 - Tagihan menghitung sisa dari pembayaran terverifikasi. Pencatatan menolak referensi ganda dan kelebihan bayar. Verifikasi menyimpan catatan, petugas, dan waktu pemeriksaan. Kuitansi terverifikasi serta rapor dengan nilai berstatus Terbit dapat diunduh sebagai PDF.
@@ -85,9 +85,9 @@ Skrip memakai Brave jika tersedia pada lokasi standar komputer ini; atau atur `$
 
 Angka ringkasan seperti 360 siswa, 28 guru/staf, grafik kehadiran, jadwal/cuti contoh, serta ringkasan keuangan mengikuti data tampilan PDF. Rekaman contoh yang diimpor bukan seluruh populasi tersebut; jangan gunakan ringkasan demo sebagai laporan operasional. Ekspor, saldo tagihan, dan PDF memakai rekaman Firestore yang tersedia.
 
-Pembayaran Virtual Account pada seeder adalah contoh tampilan. Payment gateway dan WhatsApp belum dikonfigurasi. Pengiriman email pemulihan memakai SMTP Gmail setelah pengirim dikonfigurasi melalui `setup-email.bat`; formulir menampilkan kegagalan bila konfigurasi belum tersedia atau pengiriman gagal. Tidak ada pesan yang dikirim melalui WhatsApp dari aplikasi ini.
+Pembayaran Virtual Account pada seeder adalah contoh tampilan. Payment gateway dan WhatsApp belum dikonfigurasi. Pengiriman email pemulihan memakai layanan Firebase Authentication; formulir menampilkan kegagalan bila layanan tidak dapat dihubungi. Tidak ada pesan yang dikirim melalui WhatsApp dari aplikasi ini.
 
-Bahasa Inggris tersedia untuk navigasi dan label umum; teks isi sekolah serta sebagian formulir tetap dalam bahasa Indonesia sesuai desain. Pengelolaan akun mendukung role Owner dan Admin; editor matriks izin dan portal peran lain belum tersedia. Modul penggajian, perpustakaan, sertifikat, integrasi eksternal, dan pengelolaan cuti penuh masih tercatat sebagai usulan audit.
+Bahasa Inggris tersedia untuk navigasi dan label umum; teks isi sekolah serta sebagian formulir tetap dalam bahasa Indonesia sesuai desain. Pengelolaan akun mendukung role Owner, Admin, Keuangan, dan Akademik dengan pembatasan menu serta akses server; editor matriks izin belum tersedia. Modul penggajian, perpustakaan, sertifikat, integrasi eksternal, dan pengelolaan cuti penuh masih tercatat sebagai usulan audit.
 
 Aplikasi berjalan lokal dan belum dideploy ke hosting. Untuk lingkungan produksi gunakan akun/data sebenarnya, kredensial service account yang dikelola dengan aman, konfigurasi layanan email, `APP_ENV=production`, `APP_DEBUG=false`, serta document root ke `public/`. Jangan menjalankan impor data contoh pada produksi tanpa pemeriksaan dan persetujuan.
 
