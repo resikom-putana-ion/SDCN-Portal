@@ -21,6 +21,10 @@ Skrip mencari PHP pada PATH atau `C:\xampp\php\php.exe`, menggunakan port **8017
 
 Dashboard tidak menyediakan halaman publik `/website`. Landing page adalah aplikasi terpisah; admin tetap mengedit dan menerbitkan kontennya melalui Firestore. Dashboard, autentikasi, session, cache, konten website, dan rekaman operasional memakai Cloud Firestore pada proyek `sd-ceria-nusantara`, sama dengan landing page. Tidak diperlukan database SQLite lokal. Detail koneksi, struktur koleksi, dan sinkronisasi website tersedia di [docs/FIREBASE.md](docs/FIREBASE.md).
 
+## Email pemulihan akun
+
+Klik dua kali **setup-email.bat** untuk menghubungkan Gmail/Google Workspace memakai App Password. Skrip meminta kredensial secara lokal dan mengirim email uji ke pengirim. Petunjuk lengkap, konfigurasi manual, dan cara mencoba lupa kata sandi tersedia di [docs/EMAIL.md](docs/EMAIL.md).
+
 ## Pemasangan awal pada komputer lain
 
 Memerlukan PHP 8.2+, Composer, ekstensi Laravel standar, OpenSSL, `mbstring`, `dom`, `fileinfo`, dan `zip`. `pdo_sqlite` hanya diperlukan untuk impor satu kali dari database SQLite lama dan pengujian. Node hanya dibutuhkan untuk pengujian browser; tampilan menggunakan Blade serta CSS/JavaScript lokal dan tidak memerlukan proses build frontend.
@@ -81,7 +85,7 @@ Skrip memakai Brave jika tersedia pada lokasi standar komputer ini; atau atur `$
 
 Angka ringkasan seperti 360 siswa, 28 guru/staf, grafik kehadiran, jadwal/cuti contoh, serta ringkasan keuangan mengikuti data tampilan PDF. Rekaman contoh yang diimpor bukan seluruh populasi tersebut; jangan gunakan ringkasan demo sebagai laporan operasional. Ekspor, saldo tagihan, dan PDF memakai rekaman Firestore yang tersedia.
 
-Pembayaran Virtual Account pada seeder adalah contoh tampilan. Payment gateway, WhatsApp, dan pengiriman email eksternal belum dikonfigurasi. `MAIL_MAILER=log` menulis pesan reset ke `storage/logs/laravel.log`; isi konfigurasi SMTP untuk pengiriman email sesungguhnya. Tidak ada pesan yang dikirim melalui WhatsApp dari aplikasi ini.
+Pembayaran Virtual Account pada seeder adalah contoh tampilan. Payment gateway dan WhatsApp belum dikonfigurasi. Pengiriman email pemulihan memakai SMTP Gmail setelah pengirim dikonfigurasi melalui `setup-email.bat`; formulir menampilkan kegagalan bila konfigurasi belum tersedia atau pengiriman gagal. Tidak ada pesan yang dikirim melalui WhatsApp dari aplikasi ini.
 
 Bahasa Inggris tersedia untuk navigasi dan label umum; teks isi sekolah serta sebagian formulir tetap dalam bahasa Indonesia sesuai desain. Pengelolaan akun mendukung role Owner dan Admin; editor matriks izin dan portal peran lain belum tersedia. Modul penggajian, perpustakaan, sertifikat, integrasi eksternal, dan pengelolaan cuti penuh masih tercatat sebagai usulan audit.
 

@@ -17,7 +17,7 @@ abstract class CloudTestCase extends TestCase
     {
         parent::setUp();
         Http::preventStrayRequests();
-        config(['database.default' => 'disabled', 'auth.passwords.users.store' => 'array']);
+        config(['database.default' => 'disabled', 'auth.passwords.users.store' => 'array', 'school.firebase_auth_enabled' => false]);
         $this->store = new MemoryFirestore;
         $this->app->instance(FirestoreDocumentStore::class, $this->store);
         $this->store->put('admins', hash('sha256', 'admin@sdcerianusantara.sch.id'), [

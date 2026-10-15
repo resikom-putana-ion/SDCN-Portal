@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'firebase_auth_enabled' => env('FIREBASE_AUTH_ENABLED', false),
+    'firebase_api_key' => env('FIREBASE_API_KEY'),
     'firebase_project' => env('FIREBASE_PROJECT_ID', 'sd-ceria-nusantara'),
     'firebase_database' => env('FIREBASE_DATABASE_ID', '(default)'),
     'firebase_credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/private/firebase-service-account.json')),

@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Exceptions\FirebaseAuthException;
+use App\Services\FirebaseAuth;
 use App\Support\CloudData;
 use App\Support\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -48,13 +52,30 @@ class UserManagementController extends Controller
             'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed'],
         ], $this->messages());
         $id = hash('sha256', $data['email']);
-        $password = Hash::make($data['password']);
+        $this->authorizeOwner($request);
+        if (User::find($id)) {
+            throw ValidationException::withMessages(['email' => 'Email ini sudah digunakan oleh akun lain.']);
+        }
+        $firebase = app(FirebaseAuth::class);
+        $uid = $firebase->enabled() ? 'sdcn-'.Str::uuid() : null;
+        $password = $uid ? '' : Hash::make($data['password']);
+        if ($uid) {
+            try {
+                $firebase->create($uid, $data['email'], $data['name'], $data['password'], (bool) $data['active']);
+            } catch (FirebaseAuthException $e) {
+                throw ValidationException::withMessages(['email' => $e->reason === 'EMAIL_EXISTS'
+                    ? 'Email ini sudah terdaftar di layanan akun. Gunakan email lain atau hubungi pengelola.'
+                    : 'Akun belum dapat dibuat di layanan autentikasi. Silakan coba lagi.']);
+            }
+        }
 
-        CloudData::transaction(function () use ($request, $data, $id, $password) {
+        try {
+        CloudData::transaction(function () use ($request, $data, $id, $password, $uid) {
             $this->authorizeOwner($request);
             $created = CloudData::store()->create('admins', $id, [
                 'name' => $data['name'], 'email' => $data['email'], 'password' => $password,
                 'role' => $data['role'], 'active' => (bool) $data['active'], 'remember_token' => '',
+                'firebase_uid' => $uid,
                 'created_at' => now()->toIso8601String(), 'updated_at' => now()->toIso8601String(),
             ]);
             if (!$created) {
@@ -62,6 +83,19 @@ class UserManagementController extends Controller
             }
             School::log('Menambahkan akun '.User::ROLES[$data['role']].': '.$data['name'], 'users', 'Tersimpan');
         });
+        } catch (\Throwable $e) {
+            // Firebase calls stay outside retried Firestore transactions. Compensate only
+            // the account created by this request, never an existing email/UID.
+            if ($uid) {
+                try {
+                    // A timed-out Firestore commit may already have succeeded.
+                    $saved = User::find($id);
+                    if ($saved?->firebase_uid !== $uid) $firebase->delete($uid);
+                }
+                catch (\Throwable) { Log::warning('Firebase account creation needs reconciliation.', ['uid' => $uid]); }
+            }
+            throw $e;
+        }
 
         return redirect('/admin/pengguna')->with('success', 'Akun '.User::ROLES[$data['role']].' berhasil ditambahkan.');
     }
@@ -90,6 +124,18 @@ class UserManagementController extends Controller
             CloudData::store()->put('admins', $account, $row);
             School::log('Mengubah akun '.$data['name'].' menjadi '.User::ROLES[$data['role']], 'users', $row['active'] ? 'Aktif' : 'Nonaktif');
         });
+
+        $updated = User::find($account);
+        if ($updated->firebase_uid) {
+            try {
+                app(FirebaseAuth::class)->update($updated->firebase_uid, [
+                    'displayName' => $updated->name, 'disableUser' => ! $updated->active,
+                ]);
+            } catch (FirebaseAuthException) {
+                // The local active flag is authoritative and already denies dashboard access.
+                return back()->withErrors(['active' => 'Perubahan sekolah tersimpan, tetapi sinkronisasi layanan akun gagal. Coba simpan kembali.']);
+            }
+        }
 
         if ($account === (string) $request->user()->id && !(bool) $data['active']) {
             Auth::logout();

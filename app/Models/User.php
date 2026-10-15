@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\SchoolPasswordReset;
 use App\Support\CloudData;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -12,6 +13,16 @@ use Illuminate\Support\Facades\Hash;
 class User extends GenericUser implements CanResetPasswordContract
 {
     use CanResetPassword, Notifiable;
+
+    public function usesFirebaseAuth(): bool
+    {
+        return (bool) config('school.firebase_auth_enabled') || ! empty($this->attributes['firebase_uid']);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new SchoolPasswordReset($token));
+    }
 
     public const ROLES = [
         'owner' => 'Owner',
@@ -37,7 +48,7 @@ class User extends GenericUser implements CanResetPasswordContract
     public static function find($id): ?self
     {
         $row = CloudData::store()->get('admins', (string) $id);
-        return $row ? new self($row + ['remember_token' => '', 'updated_at' => $row['created_at'] ?? null]) : null;
+        return $row ? new self($row + ['password' => '', 'firebase_uid' => null, 'firebase_remember_version' => '', 'remember_token' => '', 'updated_at' => $row['created_at'] ?? null]) : null;
     }
     public static function all(): \Illuminate\Support\Collection
     {
@@ -45,6 +56,9 @@ class User extends GenericUser implements CanResetPasswordContract
     }
     public function setPassword(string $password): void
     {
+        if ($this->usesFirebaseAuth()) {
+            throw new \LogicException('Gunakan pemulihan kata sandi Firebase untuk akun ini.');
+        }
         CloudData::store()->transaction(function () use ($password) {
             $row = CloudData::store()->get('admins', (string) $this->id);
             abort_unless($row, 404);

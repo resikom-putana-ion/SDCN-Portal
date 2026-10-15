@@ -14,5 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->dontReport([\App\Exceptions\FirebaseAuthException::class]);
+        $exceptions->render(function (\App\Exceptions\FirebaseAuthException $e, \Illuminate\Http\Request $request) {
+            return response()->view('errors.auth-unavailable', [], 503);
+        });
     })->create();

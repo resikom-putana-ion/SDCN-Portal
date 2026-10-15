@@ -20,7 +20,9 @@ Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 't
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
 Route::get('/forgot-password', fn () => view('auth.recovery', ['mode' => 'forgot']))->name('password.request');
 Route::post('/forgot-password', [AuthController::class, 'forgot'])->middleware('throttle:3,1')->name('password.email');
-Route::get('/reset-password/{token}', fn ($token) => view('auth.recovery', ['mode' => 'reset', 'token' => $token]))->name('password.reset');
+Route::get('/reset-password/{token}', fn ($token) => config('school.firebase_auth_enabled')
+    ? redirect('/forgot-password')->withErrors(['email' => 'Minta tautan pemulihan baru untuk akun Anda.'])
+    : view('auth.recovery', ['mode' => 'reset', 'token' => $token]))->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'reset'])->middleware('throttle:6,1')->name('password.update');
 Route::post('/language', function (Request $request) {
     $request->validate(['locale' => 'required|in:id,en']);
@@ -33,7 +35,7 @@ Route::get('/ppdb', [WebsiteController::class, 'application']);
 Route::post('/ppdb', [WebsiteController::class, 'submitApplication'])->middleware('throttle:5,1');
 Route::get('/ppdb/berhasil', fn () => session()->has('registration') ? view('public.success') : redirect('/ppdb'));
 
-Route::middleware(['auth', SchoolAdmin::class, SchoolRoleAccess::class])->prefix('admin')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAdmin::class, SchoolRoleAccess::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/pengguna', [UserManagementController::class, 'index']);
     Route::middleware(SchoolOwner::class)->group(function () {
