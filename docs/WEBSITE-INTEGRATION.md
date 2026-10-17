@@ -68,6 +68,8 @@ python tools/sync-landing-preview.py C:\path\checkout-landing
 
 ## Verifikasi
 
+Perubahan dashboard disimpan pada branch lokal `main3_dim`. Checkout source landing di `.tools/landing-reference/` juga memiliki branch lokal `main3_dim`, dengan commit `ffa15d7` untuk sinkronisasi konten dan tim guru. Patch portabel di dokumen ini tetap dapat dipakai pada checkout landing yang terpisah; folder `.tools/` tidak ikut commit dashboard. Kedua branch belum dipush.
+
 Dashboard:
 
 ```powershell

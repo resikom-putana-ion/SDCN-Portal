@@ -41,15 +41,14 @@ const manifest = JSON.parse(fs.readFileSync(path.join(output, 'manifest.json')))
         assert.equal(new URL(page.url()).pathname, manifest.profile);
         await page.setViewportSize({width:390,height:844});
         await page.goto('http://navigation.test'+manifest.profile);
-        // The existing dashboard intentionally has a 1060px desktop minimum.
-        // Collapsing its sidebar must still make the new return control reachable.
-        await page.locator('[data-sidebar]').click();
+        // The responsive header leaves the return control available above the
+        // existing desktop content, which scrolls within its own work area.
         const box = await page.locator('[data-dashboard-back]').boundingBox();
         assert.ok(box && box.height >= 44 && box.x >= 0 && box.x+box.width <= 390, 'Back link is reachable on mobile');
         await page.screenshot({path:path.join(output,'profile-mobile.png'),fullPage:true});
         await page.locator('[data-dashboard-back]').click();
         assert.equal(new URL(page.url()).pathname+new URL(page.url()).search, manifest.list);
         assert.deepEqual(errors, []);
-        console.log('Navigation browser checks passed: cancel, parent links, retained filters, keyboard, and return target with sidebar collapsed on a narrow viewport. Full mobile layout is outside this fix.');
+        console.log('Navigation browser checks passed: cancel, parent links, retained filters, keyboard, and reachable return control on a narrow viewport.');
     } finally {await browser.close()}
 })().catch(error => {console.error(error); process.exitCode=1});

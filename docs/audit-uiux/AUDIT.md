@@ -2,7 +2,7 @@
 
 18 Oktober 2026 · dashboard `main2-juan`
 
-**Status:** navigasi kembali sudah diperbaiki. Header baru dan optimasi performa masih berupa usulan, menunggu persetujuan pengguna. Pemeriksaan dilakukan pada kode dan halaman dengan data uji terisolasi; belum ada pengukuran performa dashboard setelah login ke Firebase produksi.
+**Status:** navigasi kembali sudah diperbaiki dan header yang disetujui pengguna sudah diterapkan pada branch `main3_dim`. Optimasi performa masih berupa usulan, menunggu persetujuan terpisah. Pemeriksaan dilakukan pada kode dan halaman dengan data uji terisolasi; belum ada pengukuran performa dashboard setelah login ke Firebase produksi.
 
 ## 1. Navigasi kembali — diterapkan
 
@@ -24,17 +24,23 @@ Sebelumnya layout utama hanya menyediakan tautan Beranda pada breadcrumb; tombol
 
 Tautan memakai hierarki halaman, sehingga akses langsung, refresh, atau selesai menyimpan tidak membuat pengguna terjebak bolak-balik ke form edit. Filter yang disimpan hanya parameter daftar yang dikenal. Referer dari domain/port lain tidak dipakai. Fitur ini tidak membaca data tambahan dari Firebase. Tombol Batal pada form edit profil juga mengikuti tujuan kembali ke profil.
 
-Implementasi: `app/Support/DashboardNavigation.php`, `resources/views/components/dashboard-back.blade.php`, kedua layout, dan form admin. Uji fitur mencakup role terbatas, filter, URL asing, akses langsung, dan alur pembayaran. Uji browser memakai data contoh di memori, termasuk klik Batal, keyboard Enter, kembali dari dokumen, serta target kembali pada viewport sempit setelah sidebar diciutkan. Dashboard secara keseluruhan masih memakai layout desktop; uji ini tidak menyatakan bahwa seluruh halaman sudah responsif.
+Implementasi: `app/Support/DashboardNavigation.php`, `resources/views/components/dashboard-back.blade.php`, kedua layout, dan form admin. Uji fitur mencakup role terbatas, filter, URL asing, akses langsung, dan alur pembayaran. Uji browser memakai data contoh di memori, termasuk klik Batal, keyboard Enter, kembali dari dokumen, serta target kembali pada viewport sempit. Konten tabel/form/profil masih memakai susunan desktop; uji ini tidak menyatakan bahwa seluruh halaman sudah didesain ulang untuk ponsel.
 
-Hasil verifikasi: 133 tes Laravel lulus (1.383 assertion), uji navigasi di Chrome lulus, dan kedua mockup sudah dirender serta diperiksa. Halaman login lokal merespons HTTP 200 di port 8017. Hasil ini memverifikasi perilaku dan tampilan yang diperiksa, bukan skor performa layanan cloud.
+Hasil verifikasi setelah penerapan header: 135 tes Laravel lulus (1.391 assertion); 58 tes source landing lulus (425 assertion). Uji navigasi, header, dan editor di Chrome lulus. Halaman login lokal merespons HTTP 200 di port 8017. Hasil ini memverifikasi perilaku dan tampilan yang diperiksa, bukan skor performa layanan cloud.
 
-## 2. Header — usulan untuk disetujui
+## 2. Header — disetujui dan diterapkan
 
-Lihat [mockup desktop](header-desktop.png), [mockup ponsel](header-mobile.png), atau buka [HTML penjelasan dan mockup](header-proposal.html). Semua nama dan jumlah dalam gambar merupakan ilustrasi.
+Lihat arsip rancangan yang disetujui: [mockup desktop](header-desktop.png), [mockup ponsel](header-mobile.png), dan [HTML penjelasan dan mockup](header-proposal.html). Semua nama dan jumlah dalam gambar merupakan ilustrasi. Label status pada arsip mockup mencatat keadaan saat rancangan dibuat.
+
+Header aktif memakai pencarian terbatas, informasi tahun ajaran dari pengaturan sekolah, ikon notifikasi netral, serta satu menu akun berisi profil, tema, bahasa, dan keluar akun. Breadcrumb kini memiliki tautan ke induk halaman. Tahun ajaran kosong ditampilkan sebagai “Belum diatur”, bukan periode buatan. Pemeriksaan tahun menggunakan koleksi konfigurasi sekolah yang tersedia pada request, tanpa mengganti driver atau kebijakan cache.
+
+Pada lebar sampai 1.100 px sidebar menjadi panel dengan backdrop, Escape, pemulihan fokus, dan pembatasan fokus keyboard. Header dan judul mengikuti lebar layar; di ponsel pencarian berpindah ke baris kedua. Tabel/form/profil tetap memakai susunan desktop dan bergulir horizontal di area konten. Ini penerapan shell/header responsif, bukan desain ulang seluruh konten ponsel.
+
+Uji browser header mencakup menu akun dengan keyboard, klik di luar, Escape, tema yang bertahan setelah reload, pencarian global, role akademik/keuangan, teks Inggris, nama panjang, dan ukuran 320–1.600 px. Screenshot hasil uji tersimpan di `storage/app/navigation-browser-check/header-*.png`.
 
 Dasar referensi: Dwinawan membagi dashboard menjadi header, sidebar, dan area kerja, lalu menjelaskan penyesuaian grid saat ruang layar menyempit. Artikel tersebut membahas grid, sehingga pengelompokan kontrol di bawah adalah rekomendasi khusus proyek ini, bukan aturan yang dikutip dari penulis. [Layout: Grid Dashboard](https://www.dwinawan.com/layout-grid-dashboard).
 
-| Temuan pada proyek | Usulan | Manfaat |
+| Temuan awal sebelum penerapan | Rancangan yang disetujui | Manfaat |
 | --- | --- | --- |
 | Pencarian global memakai seluruh sisa lebar | Batasi lebar pencarian sekitar 320–400 px, tetap adaptif | Konteks dan akun tidak terlihat sebagai ikon tambahan di ujung layar |
 | Akun tampil di sidebar dan header | Satu menu akun di header, dengan nama dan role | Pengguna tahu sedang memakai akses yang mana |
@@ -46,7 +52,7 @@ Dasar referensi: Dwinawan membagi dashboard menjadi header, sidebar, dan area ke
 
 Spesifikasi awal: tinggi header sekitar 72 px termasuk shell, padding area kerja 24–32 px, ritme jarak 8 px, target tindakan utama minimal 44 px, warna biru sekolah dan Poppins tetap digunakan. Nama akun boleh dipendekkan pada lebar menengah. Menu harus mendukung keyboard, fokus yang jelas, Escape, dan pembaca layar. Animasi ringan hanya untuk transform/opacity dan menghormati reduced motion. Kontras perlu diverifikasi pada tema terang dan gelap saat implementasi.
 
-**Cakupan persetujuan header:** penataan header, menu akun, penempatan konteks tahun ajaran, serta penyelarasan area judul/breadcrumb. Tabel, statistik, model data, dan seluruh sidebar tidak ikut didesain ulang hanya karena terlihat dalam gambar. Sidebar di mockup dipakai untuk menjelaskan proporsi; perubahan fungsi sidebar dibatasi pada pemindahan identitas akun dan akses navigasi sempit yang disetujui. Perubahan penuh layout ponsel untuk tabel/profil/form adalah pekerjaan lanjutan yang perlu dipilih terpisah. Integrasi sumber notifikasi nyata juga perlu ditetapkan; desain header dapat memakai ikon netral lebih dulu.
+**Cakupan penerapan header:** penataan header, menu akun, penempatan konteks tahun ajaran, serta penyelarasan area judul/breadcrumb. Tabel, statistik, model data, dan seluruh sidebar tidak ikut didesain ulang hanya karena terlihat dalam gambar. Perubahan fungsi sidebar dibatasi pada pemindahan identitas akun dan akses navigasi sempit. Perubahan penuh layout ponsel untuk tabel/profil/form adalah pekerjaan lanjutan yang perlu dipilih terpisah. Integrasi sumber notifikasi nyata juga perlu ditetapkan; header saat ini memakai ikon netral.
 
 ## 3. Performa — temuan kode dan rencana, belum diterapkan
 
@@ -76,7 +82,7 @@ Sebagai acuan kualitas web: LCP ≤ 2,5 detik, INP ≤ 200 ms, CLS ≤ 0,1 pada 
 
 Rujukan teknis untuk rencana: [Firestore cursor pagination](https://firebase.google.com/docs/firestore/query-data/query-cursors) mendukung pembacaan bertahap menggunakan batas dan cursor. [PHP built-in server](https://www.php.net/manual/en/features.commandline.webserver.php) menjelaskan proses single-thread serta keterbatasan worker di Windows. [Laravel deployment](https://laravel.com/docs/12.x/deployment) menjelaskan cache konfigurasi, routes, dan views untuk deployment. Rekomendasi prioritas di atas adalah hasil membaca kode proyek, bukan hasil benchmark dari dokumentasi tersebut.
 
-**Persetujuan yang dibutuhkan:** desain header dan tahap optimasi dapat dipilih terpisah. Rekomendasi awal adalah menyetujui baseline performa, kemudian pilot backend pada daftar/profil siswa beserta cache token. Migrasi session/hosting, seluruh layout ponsel, dan navigasi parsial tetap tahap tersendiri. Tidak ada perubahan konfigurasi performa atau infrastruktur yang dilakukan dalam sesi audit ini.
+**Persetujuan yang masih dibutuhkan:** baseline performa, kemudian pilot backend pada daftar/profil siswa beserta cache token. Migrasi session/hosting, seluruh layout konten ponsel, dan navigasi parsial tetap tahap tersendiri. Persetujuan header sudah diterima; tidak ada perubahan konfigurasi performa atau infrastruktur yang dilakukan dalam penerapan header ini.
 
 ## Menjalankan pemeriksaan
 
@@ -84,6 +90,7 @@ Rujukan teknis untuk rencana: [Firestore cursor pagination](https://firebase.goo
 Set-Location C:\P02_Dashboard_SDcerianusantra
 & C:\xampp\php\php.exe artisan test --compact
 node tests/Browser/navigation.cjs
+node tests/Browser/header.cjs
 node tools/render-uiux-audit.cjs
 ```
 

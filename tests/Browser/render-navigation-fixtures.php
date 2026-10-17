@@ -28,4 +28,14 @@ foreach (['list'=>[$list, null, null], 'profile'=>[$profile, $student->id, null]
     file_put_contents($output.'/'.$file.'.html', $controller->page($request, 'siswa', $id, $tab)->render());
 }
 file_put_contents($output.'/manifest.json', json_encode(compact('profile', 'list'), JSON_THROW_ON_ERROR));
+foreach (['admin', 'keuangan', 'akademik', 'long', 'en'] as $variant) {
+    $role = in_array($variant, ['keuangan', 'akademik'], true) ? $variant : 'admin';
+    auth()->setUser(new App\Models\User(['id'=>'header-'.$variant, 'name'=>$variant === 'long' ? str_repeat('Nama Panjang ', 12) : 'Admin Sekolah', 'email'=>'admin@example.test', 'role'=>$role, 'active'=>true]));
+    app('session')->driver()->put('locale', $variant === 'en' ? 'en' : 'id');
+    app()->setLocale($variant === 'en' ? 'en' : 'id');
+    $request = Illuminate\Http\Request::create('http://navigation.test/admin');
+    $request->setLaravelSession(app('session')->driver());
+    $app->instance('request', $request);
+    file_put_contents($output.'/header-'.$variant.'.html', $controller->dashboard()->render());
+}
 echo "Rendered isolated navigation fixtures.\n";
