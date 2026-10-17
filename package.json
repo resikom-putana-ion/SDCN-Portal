@@ -5,7 +5,8 @@
     "scripts": {
         "test:browser": "node tests/Browser/check.cjs",
         "test:crop": "node tests/Browser/crop.cjs",
-        "test:editor": "node tests/Browser/editor.cjs"
+        "test:editor": "node tests/Browser/editor.cjs",
+        "test:navigation": "node tests/Browser/navigation.cjs"
     },
     "devDependencies": {
         "playwright": "1.63.0"

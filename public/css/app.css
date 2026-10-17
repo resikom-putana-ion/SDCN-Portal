@@ -32,5 +32,7 @@ body{line-height:1.5}
 .student-photo-editor{margin:24px 0;padding:20px;border:1px solid var(--border);border-radius:12px}.student-photo-preview{display:block;width:120px;height:120px;object-fit:cover;border-radius:12px;margin:16px 0}.student-photo-editor .field{margin:12px 0}.profile-avatar{object-fit:cover}
 .auth-form input::placeholder{color:var(--muted);opacity:.45}
 .password-control{position:relative}
+body.dark .page-back a{color:var(--text)}
+.page-back{margin:-4px 0 12px}.page-back a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:4px 8px 4px 0;color:var(--primary);font-size:12px;font-weight:500;border-radius:6px;max-width:100%}.page-back a:hover span{text-decoration:underline;text-underline-offset:4px}.page-back .icon{width:18px;height:18px}@media print{.page-back{display:none}}
 .auth-form .password-control input{padding-right:112px}
 .password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:36px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--primary);font-size:11px}

@@ -3,6 +3,7 @@
 @php
 $showAdminProfile = $screen === 'pengaturan' && request('tab') !== 'sekolah';
 $fullAccess = \App\Support\SchoolAccess::hasFullAccess(auth()->user());
+$cancelUrl = in_array($kind, ['settings', 'period']) ? '/admin/'.$screen.($screen === 'pengaturan' ? '?tab=sekolah' : '') : (\App\Support\DashboardNavigation::back(request())['url'] ?? '/admin/'.$screen);
 @endphp
 @if($screen==='pengaturan')
 <nav class="tabs" aria-label="Pengaturan sekolah">
@@ -28,6 +29,6 @@ $fullAccess = \App\Support\SchoolAccess::hasFullAccess(auth()->user());
 </x-card>
 @else
 <x-card :title="$screen==='pengaturan'?'Identitas SD Ceria Nusantara':'Informasi '.mb_strtolower($titleForm)"><form method="post" action="/admin/record/{{ $kind }}{{ $record?'/'.$record->id:'' }}">@csrf<x-fields :fields="$fields" :values="$record?->data ?? []" :live-nominal="$kind === 'invoices'" :capital-name="in_array($kind, ['students', 'staff'])"/>@if(in_array($kind, ['students', 'staff']))<x-student-photo :record="$record" :staff="$kind === 'staff'"/>@endif
-@if($kind==='settings')<p class="muted" style="margin-bottom:24px">Kontak dan alamat disalin ke draf website. Tinjau dan terbitkan agar perubahan tampil pada website sekolah.</p>@endif<div class="actions"><button class="btn">{{ __('Simpan perubahan') }}</button><a class="btn secondary" href="/admin/{{ $screen }}{{ $screen === 'pengaturan' ? '?tab=sekolah' : '' }}">{{ __('Batal') }}</a></div></form></x-card>
+@if($kind==='settings')<p class="muted" style="margin-bottom:24px">Kontak dan alamat disalin ke draf website. Tinjau dan terbitkan agar perubahan tampil pada website sekolah.</p>@endif<div class="actions"><button class="btn">{{ __('Simpan perubahan') }}</button><a class="btn secondary" href="{{ $cancelUrl }}">{{ __('Batal') }}</a></div></form></x-card>
 @endif
 @endsection
