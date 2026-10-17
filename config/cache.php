@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => env('CACHE_STORE', 'firestore'),
 
     /*
     |--------------------------------------------------------------------------
@@ -33,6 +33,7 @@ return [
     */
 
     'stores' => [
+        'firestore' => ['driver' => 'firestore'],
 
         'array' => [
             'driver' => 'array',

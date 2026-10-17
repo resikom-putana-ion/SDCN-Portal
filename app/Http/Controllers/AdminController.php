@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SchoolRecord;
 use App\Support\School;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Support\CloudData as DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +18,7 @@ class AdminController extends Controller
 
     public function page(Request $request, string $screen, ?string $id = null, ?string $tab = null)
     {
+        if ($screen === 'berita') return redirect('/admin/website/gallery/edit');
         $cfg = School::config();
         $definition = $cfg['pages'][$screen] ?? null;
         $shared = ['screen' => $screen, 'tab' => $tab ?? 'detail'];
@@ -49,7 +50,7 @@ class AdminController extends Controller
 
             return view('admin.list', $shared + compact('records'));
         }
-        $special = ['periode' => ['Periode & Kuota PPDB', 'admissions'], 'pembayaran' => ['Pembayaran', 'finance'], 'website' => ['Kelola Website Sekolah', 'website'], 'halaman' => ['Halaman & Bagian', 'website'], 'media' => ['Media Website', 'website'], 'publikasi' => ['Tinjauan & Publikasi', 'website'], 'pengaturan' => ['Pengaturan Sekolah', 'settings'], 'pengguna' => ['Pengguna & Izin', 'settings'], 'laporan' => ['Laporan Sekolah', 'reports'], 'bahasa' => ['Bahasa Dashboard', ''], 'notifikasi' => ['Notifikasi', ''], 'audit' => ['Audit Admin · Usulan penyederhanaan', 'settings'], 'kenaikan' => ['Kenaikan Kelas & Kelulusan', 'school'], 'aktivasi' => ['Siswa Berhasil Diaktifkan', 'admissions'], 'cari' => ['Hasil Pencarian', ''], 'terbit' => ['Perubahan Website Diterbitkan', 'website']];
+        $special = ['periode' => ['Periode & Kuota PPDB', 'admissions'], 'pembayaran' => ['Pembayaran', 'finance'], 'website' => ['Kelola Website Sekolah', 'website'], 'halaman' => ['Halaman & Bagian', 'website'], 'media' => ['Media Website', 'website'], 'publikasi' => ['Tinjauan & Publikasi', 'website'], 'pengaturan' => ['Pengaturan Sekolah', 'settings'], 'laporan' => ['Laporan Sekolah', 'reports'], 'bahasa' => ['Bahasa Dashboard', ''], 'notifikasi' => ['Notifikasi', ''], 'audit' => ['Audit Admin · Usulan penyederhanaan', 'settings'], 'kenaikan' => ['Kenaikan Kelas & Kelulusan', 'school'], 'aktivasi' => ['Siswa Berhasil Diaktifkan', 'admissions'], 'cari' => ['Hasil Pencarian', ''], 'terbit' => ['Perubahan Website Diterbitkan', 'website']];
         abort_unless(isset($special[$screen]), 404);
         [$title,$group] = $special[$screen];
         $shared += compact('title', 'group', 'id');
@@ -91,11 +92,12 @@ class AdminController extends Controller
         })->values();
     }
 
-    public function save(Request $request, string $kind, ?int $id = null)
+    public function save(Request $request, string $kind, ?string $id = null)
     {
         $cfg = School::config();
         abort_unless(isset($cfg['forms'][$kind]), 404);
         $record = $id ? SchoolRecord::ofKind($kind)->findOrFail($id) : null;
+        abort_if($record?->value('student_record_archived'), 409, 'Arsip siswa tidak dapat diubah. Buat koreksi melalui catatan audit sekolah.');
         $rules = [];
         foreach ($cfg['forms'][$kind] as $field) {
             $name = $field['name'];
@@ -108,13 +110,30 @@ class AdminController extends Controller
                 $rules[$name] .= '|in:'.implode(',', $field['options']);
             }
             if ($type === 'student') {
-                $rules[$name] = ['required', 'integer', Rule::exists('school_records', 'id')->where('kind', 'students')];
+                $rules[$name] = ['required', 'string', function ($attribute, $value, $fail) use ($record) {
+                    $student = SchoolRecord::ofKind('students')->find($value);
+                    if (!$student) $fail('Siswa tidak ditemukan.');
+                    elseif ($student->value('deletion_plan')) $fail('Siswa sedang dihapus.');
+                    elseif ($student->value('status') !== 'Aktif' && (string) $record?->value('student_id') !== $value) $fail('Pilih siswa aktif untuk pencatatan baru.');
+                }];
             }
         }
         if ($kind === 'grades') {
             $rules['score'] = 'required|integer|min:0|max:100';
         }
+        if (in_array($kind, ['students', 'staff'])) {
+            $rules['name'] = ['required', 'string', 'max:1000', function ($attribute, $value, $fail) {
+                if ($value !== mb_strtoupper($value)) $fail('Nama harus menggunakan huruf kapital, contoh: BUDI SANTOSO.');
+            }];
+            $rules['photo_crop'] = ['nullable', 'string', 'max:700000', function ($attribute, $value, $fail) {
+                $bytes = str_starts_with($value, 'data:image/jpeg;base64,') ? base64_decode(substr($value, 23), true) : false;
+                $size = $bytes !== false ? @getimagesizefromstring($bytes) : false;
+                if (!$size || $size[0] !== 512 || $size[1] !== 512 || $size[2] !== IMAGETYPE_JPEG) $fail('Foto harus dipotong melalui alat crop menjadi gambar persegi.');
+            }];
+        }
         $data = $request->validate($rules);
+        $photo = $data['photo_crop'] ?? null;
+        unset($data['photo_crop']);
         if (isset($data['student_id'])) {
             $student = SchoolRecord::ofKind('students')->findOrFail($data['student_id']);
             $data['name'] = $kind === 'invoices' ? $data['name'].' '.$data['period'].' · '.$student->value('name') : $student->value('name');
@@ -122,30 +141,73 @@ class AdminController extends Controller
         }
         if (in_array($kind, ['students', 'staff'])) {
             $key = $kind === 'students' ? 'nis' : 'employee_id';
-            $request->validate([$key => [Rule::unique('school_records', 'code')->ignore($record?->id)]]);
+            if (SchoolRecord::where('code', $data[$key])->get()->first(fn ($row) => (string) $row->id !== (string) $record?->id)) throw \Illuminate\Validation\ValidationException::withMessages([$key => 'Nomor sudah digunakan.']);
         }
         if ($kind === 'invoices' && $record && DB::table('school_payments')->where('invoice_id', $record->id)->exists()) {
             return back()->withErrors(['amount' => 'Tagihan dengan pembayaran tidak dapat diubah.']);
         }
         $status = match ($kind) {
-            'news' => 'Draf','students','staff','classes' => 'Aktif','announcements' => 'Terbit','transactions' => 'Selesai',default => $data['status'] ?? $record?->value('status', '') ?? ''
+            'students' => $record?->value('status', 'Aktif') ?? 'Aktif',
+            'news' => 'Draf','staff','classes' => 'Aktif','announcements' => 'Terbit','transactions' => 'Selesai',default => $data['status'] ?? $record?->value('status', '') ?? ''
         };
         $data = [...($record?->data ?? []), ...$data, 'author' => auth()->user()->name, 'status' => $status];
         $code = $data['nis'] ?? $data['employee_id'] ?? $record?->code ?? strtoupper($kind).'-'.Str::uuid();
         $record ??= new SchoolRecord(['kind' => $kind]);
-        DB::transaction(function () use ($record, $code, $data, $kind) {
-            $record->fill(['code' => $code, 'data' => $data])->save();
-            if ($kind === 'settings') {
-                foreach (['kontak' => ['email', 'phone', 'hours', 'address'], 'profil' => ['founded', 'accreditation']] as $section => $keys) {
-                    $content = SchoolRecord::where('code', 'CONTENT-'.$section)->firstOrFail();
-                    $content->update(['data' => [...$content->data, 'draft' => [...$content->value('draft', []), ...array_intersect_key($data, array_flip($keys))], 'status' => 'Draf', 'author' => auth()->user()->name, 'date' => now()->toDateString()]]);
+        DB::transaction(function () use ($record, $code, $data, $kind, $photo) {
+            $fresh = null;
+            if ($record->id) {
+                $fresh = SchoolRecord::ofKind($kind)->findOrFail($record->id);
+                abort_if($fresh->value('deletion_plan'), 409, 'Penghapusan siswa sedang berlangsung.');
+                if ($kind === 'students') {
+                    foreach (['status', 'status_changed_at', 'status_changed_by'] as $key) {
+                        if (array_key_exists($key, $fresh->data)) $data[$key] = $fresh->data[$key];
+                    }
                 }
+            }
+            if (isset($data['student_id'])) {
+                $student = SchoolRecord::ofKind('students')->findOrFail($data['student_id']);
+                abort_if($student->value('deletion_plan'), 409, 'Penghapusan siswa sedang berlangsung.');
+                if ($student->value('status') !== 'Aktif' && (string) ($fresh?->value('student_id') ?? '') !== (string) $data['student_id']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['student_id' => 'Pilih siswa aktif untuk pencatatan baru.']);
+                }
+            }
+            if ($photo) {
+                $path = ($kind === 'staff' ? 'staff-photos/' : 'student-photos/').Str::uuid().'.jpg';
+                app(\App\Services\FirestoreFileStorage::class)->put($path, base64_decode(substr($photo, 23), true), 'image/jpeg');
+                $data['photo_path'] = $path;
+            }
+            $record->fill(['code' => $code, 'data' => $data])->save();
+            if (in_array($kind, ['settings', 'period'])) {
+                $website = app(\App\Services\WebsiteContent::class);
+                $editor = $website->editor('settings');
+                $draft = $editor['data'];
+                $mapping = $kind === 'period' ? ['period' => 'period', 'age' => 'age', 'fee' => 'fee'] : ['email' => 'email', 'phone' => 'whatsapp', 'hours' => 'hours', 'address' => 'address', 'founded' => 'founded', 'accreditation' => 'accreditation', 'name' => 'school_name'];
+                foreach ($mapping as $from => $to) if (isset($data[$from])) $draft[$to] = $from === 'fee' ? School::money($data[$from]) : (string) $data[$from];
+                $website->save('settings', $draft, $editor['version']);
             }
             School::log('Menyimpan '.($data['name'] ?? $kind), $kind, 'Tersimpan');
         });
         $screen = collect($cfg['pages'])->search(fn ($p) => $p[2] === $kind) ?: ($kind === 'period' ? 'periode' : 'pengaturan');
 
-        return redirect(in_array($kind, ['students', 'staff']) ? '/admin/'.$screen.'/'.$record->id : '/admin/'.$screen)->with('success', 'Perubahan berhasil disimpan.');
+        return redirect(in_array($kind, ['students', 'staff']) ? '/admin/'.$screen.'/'.$record->id : '/admin/'.$screen.($kind === 'settings' ? '?tab=sekolah' : ''))->with('success', 'Perubahan berhasil disimpan.');
+    }
+
+    public function studentPhoto(SchoolRecord $record)
+    {
+        return $this->profilePhoto($record, 'students');
+    }
+
+    public function staffPhoto(SchoolRecord $record)
+    {
+        return $this->profilePhoto($record, 'staff');
+    }
+
+    private function profilePhoto(SchoolRecord $record, string $kind)
+    {
+        abort_unless($record->kind === $kind && $record->value('photo_path'), 404);
+        $photo = app(\App\Services\FirestoreFileStorage::class)->get($record->value('photo_path'));
+        abort_unless($photo && $photo['content_type'] === 'image/jpeg', 404);
+        return response($photo['contents'])->header('Content-Type', 'image/jpeg')->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff');
     }
 
     public function export(Request $request, string $kind)

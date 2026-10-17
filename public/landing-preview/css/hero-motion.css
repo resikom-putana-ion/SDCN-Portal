@@ -1,0 +1,16 @@
+/* Decorative motion stays behind the content and never intercepts a tap. */
+.hero-playground{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:0}
+.hero-glow{position:absolute;inset:-45%;background:radial-gradient(ellipse at 25% 30%,#13b9b860,transparent 48%),radial-gradient(ellipse at 75% 65%,#7770e056,transparent 50%);animation:ceria-glow 16s ease-in-out infinite alternate}
+.hero-sun,.hero-star,.hero-cloud{position:absolute;animation:ceria-float 6s ease-in-out infinite alternate}
+.hero-sun{width:76px;height:76px;right:5%;top:16px;transform:rotate(8deg)}
+.hero-star{width:38px;height:38px;left:53%;top:30px;animation-delay:-3s}
+.hero-cloud{width:130px;height:57px;right:39%;bottom:15px;opacity:.18;animation-duration:9s;animation-delay:-4s}
+.hero-motion-toggle{position:absolute;right:20px;bottom:12px;z-index:3;display:flex;align-items:center;gap:7px;min-height:32px;padding:5px 10px;border:1px solid #ffffff55;border-radius:20px;background:#092e52d9;color:#fff;font:inherit;font-size:10px;cursor:pointer}
+.hero-motion-toggle:hover{background:#164f70}
+.hero-motion-toggle:focus-visible{outline:3px solid #ffcf32;outline-offset:3px}
+.hero.is-motion-paused .hero-playground *,.hero.is-motion-paused .hero-decoration::before,.hero.is-motion-paused .hero-decoration::after{animation-play-state:paused}
+@keyframes ceria-glow{from{transform:translate(-6%,-3%) rotate(-8deg)}to{transform:translate(8%,6%) rotate(12deg)}}
+@keyframes ceria-float{from{translate:0 0;rotate:-5deg}to{translate:0 10px;rotate:5deg}}
+@media(max-width:1000px){.hero-sun{width:56px;height:56px;right:22px;top:15px}.hero-star{width:28px;height:28px;left:57%;top:17px}.hero-cloud{right:36%;width:95px}}
+@media(max-width:600px){.hero-sun{width:42px;height:42px;right:12px;top:8px}.hero-star{display:none}.hero-cloud{left:18px;right:auto;bottom:9px;width:70px}.hero-motion-toggle{right:12px;bottom:8px}.hero-image{margin-bottom:25px}}
+@media(prefers-reduced-motion:reduce){.hero-playground *{animation:none!important}.hero-motion-toggle{display:none}}

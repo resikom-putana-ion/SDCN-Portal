@@ -19,6 +19,17 @@ if (-not (Test-Path -LiteralPath (Join-Path $projectRoot '.env'))) {
     throw 'Konfigurasi .env belum tersedia. Ikuti pemasangan awal di README.md.'
 }
 
+$uploadTempPath = Join-Path $projectRoot 'storage\app\private\php-upload-tmp'
+New-Item -ItemType Directory -Path $uploadTempPath -Force | Out-Null
+$phpConfigDirectory = Join-Path $uploadTempPath 'config'
+New-Item -ItemType Directory -Path $phpConfigDirectory -Force | Out-Null
+$phpTempDirectory = $uploadTempPath.Replace('\', '/')
+Set-Content -LiteralPath (Join-Path $phpConfigDirectory 'uploads.ini') -Encoding Ascii -Value @(
+    "upload_tmp_dir=`"$phpTempDirectory`"",
+    "sys_temp_dir=`"$phpTempDirectory`""
+)
+$previousIniScanDirectory = $env:PHP_INI_SCAN_DIR
+$env:PHP_INI_SCAN_DIR = if ($previousIniScanDirectory) { "$previousIniScanDirectory;$phpConfigDirectory" } else { ";$phpConfigDirectory" }
 $phpArguments = @('-d', 'max_execution_time=0', '-d', 'upload_max_filesize=5M', '-d', 'post_max_size=20M')
 $opcachePath = Join-Path (Split-Path -Parent $PhpPath) 'ext\php_opcache.dll'
 $hasOpcache = & $PhpPath -r "echo extension_loaded('Zend OPcache') ? 'yes' : 'no';"
@@ -31,4 +42,4 @@ Write-Host "SD Ceria Nusantara: http://127.0.0.1:$Port/login"
 Write-Host 'Hentikan server dengan Ctrl+C.'
 Push-Location (Join-Path $projectRoot 'public')
 try { & $PhpPath @phpArguments -S "127.0.0.1:$Port" $routerPath }
-finally { Pop-Location }
+finally { Pop-Location; $env:PHP_INI_SCAN_DIR = $previousIniScanDirectory }

@@ -20,6 +20,7 @@ $paths=[
 'download'=>'<path d="M12 2v14 m-5-5 5 5 5-5 M3 16v6h18v-6"/>',
 'check'=>'<path d="m5 12 5 5L20 6"/>',
 'close'=>'<path d="m5 5 14 14 M19 5 5 19"/>',
+'logout'=>'<path d="M9 4H4v16h5 M14 8l4 4-4 4 M9 12h12"/>',
 'plus'=>'<path d="M12 4v16 M4 12h16"/>',
 'eye'=>'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
 ];

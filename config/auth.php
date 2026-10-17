@@ -63,7 +63,7 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            'driver' => 'firestore',
             'model' => env('AUTH_MODEL', User::class),
         ],
 
@@ -95,6 +95,8 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'driver' => 'cache',
+            'store' => env('CACHE_STORE', 'firestore'),
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,

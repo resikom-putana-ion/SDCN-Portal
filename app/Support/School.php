@@ -4,7 +4,7 @@ namespace App\Support;
 
 use App\Models\SchoolRecord;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Support\CloudData as DB;
 use Illuminate\Support\Str;
 
 class School
@@ -23,6 +23,7 @@ class School
 
     public static function date($value): string
     {
+        if ($value === null || $value === '') return '—';
         try {
             return Carbon::parse($value)->locale('id')->translatedFormat('j M Y');
         } catch (\Throwable) {
@@ -43,19 +44,46 @@ class School
         return [...$record->data, 'paid' => $paid, 'balance' => $balance, 'status' => $balance === 0 ? 'Lunas' : ($paid > 0 ? 'Sebagian' : 'Belum dibayar')];
     }
 
+    public static function invoiceStudent(SchoolRecord $invoice): SchoolRecord
+    {
+        $studentId = $invoice->value('student_id');
+        if ($studentId !== '' && $studentId !== null) {
+            $student = SchoolRecord::ofKind('students')->find($studentId);
+            if ($student) {
+                return $student;
+            }
+        }
+        $snapshot = $invoice->value('student_snapshot');
+        if (! is_array($snapshot)) {
+            $snapshot = ['name' => $invoice->value('name'), 'guardian' => '', 'class' => $invoice->value('class'), 'year' => $invoice->value('period')];
+        }
+
+        return new SchoolRecord([
+            'kind' => 'archived_students',
+            'code' => $snapshot['nis'] ?? 'Arsip siswa',
+            'data' => $snapshot,
+        ]);
+    }
+
     public static function content(bool $draft = false): array
     {
-        return SchoolRecord::ofKind('content')->get()->mapWithKeys(fn ($r) => [$r->value('section') => $r->value($draft ? 'draft' : 'published', [])])->all();
+        return app(\App\Services\WebsiteContent::class)->all($draft);
     }
 
     public static function period(): array
     {
-        return SchoolRecord::ofKind('period')->first()?->data ?? [];
+        $settings = self::content()['settings'] ?? [];
+        return array_replace(['year' => now()->year.'/'.(now()->year + 1), 'quota' => 0], SchoolRecord::ofKind('period')->first()?->data ?? [], [
+            'period' => $settings['period'] ?? '', 'age' => $settings['age'] ?? '',
+            'fee' => (int) preg_replace('/[^0-9]/', '', (string) ($settings['fee'] ?? '0')),
+        ]);
     }
 
     public static function metric(string $kind, int $baseline, int $seed): int
     {
-        return $baseline + SchoolRecord::ofKind($kind)->count() - $seed;
+        $records = SchoolRecord::ofKind($kind);
+        if ($kind === 'students') $records->where('data->status', 'Aktif');
+        return $records->count();
     }
 
     public static function badge(string $status): string

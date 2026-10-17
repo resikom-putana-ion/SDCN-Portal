@@ -6,7 +6,7 @@ use App\Models\SchoolRecord;
 use App\Support\PdfDocument;
 use App\Support\School;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Support\CloudData as DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -43,14 +43,15 @@ class WorkflowController extends Controller
             if ($data['action'] === 'activate' && ! $complete) {
                 throw ValidationException::withMessages(['checks' => 'Lengkapi pemeriksaan dokumen asli dan pembayaran sebelum aktivasi siswa.']);
             }
-            $record->update(['data' => [...$record->data, ...$data, 'paid' => $complete || ! empty($data['paid']), 'payment' => ! empty($data['paid']) ? 'Tercatat' : 'Belum dicatat', 'status' => $complete ? 'Siap diaktifkan' : 'Menunggu daftar ulang']]);
+            $year = $record->value('year') ?: School::period()['year'];
+            $record->update(['data' => [...$record->data, ...$data, 'year' => $year, 'paid' => $complete || ! empty($data['paid']), 'payment' => ! empty($data['paid']) ? 'Tercatat' : 'Belum dicatat', 'status' => $complete ? 'Siap diaktifkan' : 'Menunggu daftar ulang']]);
             if ($data['action'] !== 'activate') {
                 School::log('Menyimpan daftar ulang '.$record->code, 'PPDB', 'Tersimpan');
 
                 return null;
             }
-            $nis = 'SCN-'.substr($record->code, 5);
-            $student = SchoolRecord::create(['kind' => 'students', 'code' => $nis, 'data' => [...$record->data, 'nis' => $nis, 'status' => 'Aktif', 'joined' => now()->toDateString(), 'applicant_id' => $record->id, 'address' => $record->value('address', ''), 'father' => $record->value('father', '')]]);
+            $nis = \App\Services\StudentNumber::next($year);
+            $student = SchoolRecord::create(['kind' => 'students', 'code' => $nis, 'data' => [...$record->data, 'nis' => $nis, 'registration_number' => $record->code, 'status' => 'Aktif', 'joined' => now()->toDateString(), 'applicant_id' => $record->id, 'address' => $record->value('address', ''), 'father' => $record->value('father', '')]]);
             DB::table('admission_activations')->insert(['applicant_id' => $record->id, 'student_id' => $student->id, 'created_at' => now(), 'updated_at' => now()]);
             $invoice = SchoolRecord::create(['kind' => 'invoices', 'code' => 'INV-'.$record->code, 'data' => ['name' => 'Biaya pendaftaran PPDB · '.$student->value('name'), 'student_id' => $student->id, 'class' => $data['class'], 'amount' => (int) $data['amount'], 'period' => $record->value('year'), 'due_date' => now()->toDateString(), 'type' => 'PPDB']]);
             DB::table('school_payments')->insert(['invoice_id' => $invoice->id, 'reference' => 'KW-'.$record->code, 'amount' => (int) $data['amount'], 'method' => $data['method'], 'status' => 'Terverifikasi', 'received_at' => now()->toDateString(), 'user_id' => auth()->id(), 'created_at' => now(), 'updated_at' => now()]);
@@ -65,7 +66,7 @@ class WorkflowController extends Controller
 
     public function payment(Request $request)
     {
-        $data = $request->validate(['invoice_id' => 'required|integer', 'amount' => 'required|integer|min:1', 'received_at' => 'required|date|before_or_equal:today', 'reference' => 'required|string|max:100', 'method' => 'required|in:Tunai di sekolah,Transfer manual']);
+        $data = $request->validate(['invoice_id' => 'required|string', 'amount' => 'required|integer|min:1', 'received_at' => 'required|date|before_or_equal:today', 'reference' => 'required|string|max:100', 'method' => 'required|in:Tunai di sekolah,Transfer manual']);
         $id = DB::transaction(function () use ($data) {
             $invoice = SchoolRecord::ofKind('invoices')->lockForUpdate()->findOrFail($data['invoice_id']);
             if (DB::table('school_payments')->where('reference', $data['reference'])->exists()) {
@@ -83,7 +84,7 @@ class WorkflowController extends Controller
         return redirect('/admin/pembayaran?tab=riwayat')->with('success', 'Pembayaran berhasil dicatat.');
     }
 
-    public function verifyPayment(Request $request, int $id)
+    public function verifyPayment(Request $request, string $id)
     {
         $data = $request->validate(['notes' => 'required|string|max:3000', 'confirmed' => 'accepted']);
         DB::transaction(function () use ($id, $data) {
@@ -104,17 +105,17 @@ class WorkflowController extends Controller
         return back()->with('success', 'Pembayaran terverifikasi. Sisa tagihan diperbarui.');
     }
 
-    public function receipt(int $id)
+    public function receipt(string $id)
     {
         $payment = DB::table('school_payments')->where('status', 'Terverifikasi')->find($id);
         abort_unless($payment, 404);
         $invoice = SchoolRecord::findOrFail($payment->invoice_id);
-        $student = SchoolRecord::find($invoice->value('student_id'));
+        $student = School::invoiceStudent($invoice);
 
         return view('admin.receipt', ['title' => 'Kuitansi Pembayaran', 'group' => 'finance', 'screen' => 'pembayaran', 'payment' => $payment, 'invoice' => $invoice, 'student' => $student]);
     }
 
-    public function inspectPayment(int $id)
+    public function inspectPayment(string $id)
     {
         $payment = DB::table('school_payments')->find($id);
         abort_unless($payment, 404);
@@ -123,12 +124,12 @@ class WorkflowController extends Controller
         return view('admin.payment-review', ['title' => 'Periksa Pembayaran', 'group' => 'finance', 'screen' => 'pembayaran', 'payment' => $payment, 'invoice' => $invoice]);
     }
 
-    public function receiptPdf(int $id)
+    public function receiptPdf(string $id)
     {
         $payment = DB::table('school_payments')->where('status', 'Terverifikasi')->find($id);
         abort_unless($payment, 404);
         $invoice = SchoolRecord::ofKind('invoices')->findOrFail($payment->invoice_id);
-        $student = SchoolRecord::ofKind('students')->findOrFail($invoice->value('student_id'));
+        $student = School::invoiceStudent($invoice);
 
         return PdfDocument::download('pdf.receipt', compact('payment', 'invoice', 'student'), $payment->reference.'.pdf');
     }
@@ -141,23 +142,39 @@ class WorkflowController extends Controller
         return PdfDocument::download('pdf.report', compact('record', 'grades'), 'Rapor-'.$record->code.'.pdf');
     }
 
-    public function document(int $id)
+    public function archivedReportPdf(SchoolRecord $record)
     {
-        $doc = DB::table('school_documents')->find($id);
-        abort_unless($doc && Storage::disk('local')->exists($doc->path), 404);
+        abort_unless($record->kind === 'student_deletions', 404);
+        $grades = SchoolRecord::ofKind('grades')->where('data->student_snapshot.nis', $record->code)->where('data->status', 'Terbit')->get();
+        abort_if($grades->isEmpty(), 404);
+        $snapshot = $grades->first()->value('student_snapshot');
+        abort_unless(is_array($snapshot), 404);
+        $record = new SchoolRecord(['kind' => 'archived_students', 'code' => $record->code, 'data' => $snapshot]);
 
-        return Storage::disk('local')->download($doc->path, $doc->name);
+        return PdfDocument::download('pdf.report', compact('record', 'grades'), 'Rapor-Arsip-'.$record->code.'.pdf');
     }
 
-    public function uploadDocument(Request $request, SchoolRecord $record)
+    public function document(string $id, \App\Services\FirestoreFileStorage $files)
+    {
+        $doc = DB::table('school_documents')->find($id);
+        $file = $doc ? $files->get($doc->path) : null;
+        abort_unless($file, 404);
+        return response()->streamDownload(static function () use ($file) { echo $file['contents']; }, \Illuminate\Support\Str::ascii(basename($doc->name)), ['Content-Type' => $file['content_type'], 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+    }
+
+    public function uploadDocument(Request $request, SchoolRecord $record, \App\Services\FirestoreFileStorage $files)
     {
         abort_unless(in_array($record->kind, ['students', 'staff', 'applicants']), 404);
         $request->validate(['document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', 'name' => 'required|string|max:150']);
         $file = $request->file('document');
-        $path = $file->store('documents', 'local');
-        DB::table('school_documents')->insert(['record_id' => $record->id, 'name' => $request->name.'.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now()]);
-        School::log('Mengunggah dokumen '.$record->code, 'Dokumen', 'Tersimpan');
-
+        $path = 'dashboard-documents/'.\Illuminate\Support\Str::uuid().'.'.$file->extension();
+        DB::transaction(function () use ($record, $request, $file, $path, $files) {
+            $record = SchoolRecord::ofKind($record->kind)->findOrFail($record->id);
+            abort_if($record->value('deletion_plan'), 409, 'Penghapusan siswa sedang berlangsung.');
+            $files->putUploadedFile($path, $file);
+            DB::table('school_documents')->insert(['record_id' => $record->id, 'name' => $request->name.'.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize(), 'created_at' => now(), 'updated_at' => now()]);
+            School::log('Mengunggah dokumen '.$record->code, 'Dokumen', 'Tersimpan');
+        });
         return back()->with('success', 'Dokumen berhasil diunggah.');
     }
 
@@ -172,7 +189,7 @@ class WorkflowController extends Controller
     {
         $data = $request->validate(['from' => 'required|string', 'to' => 'required|string|different:from', 'year' => 'required|regex:/^\d{4}\/\d{4}$/', 'confirm' => 'accepted']);
         $count = DB::transaction(function () use ($data) {
-            $students = SchoolRecord::ofKind('students')->where('data->class', $data['from'])->lockForUpdate()->get();
+            $students = SchoolRecord::ofKind('students')->where('data->class', $data['from'])->where('data->status', 'Aktif')->lockForUpdate()->get();
             foreach ($students as $student) {
                 $student->update(['data' => [...$student->data, 'class' => $data['to'], 'year' => $data['year'], 'status' => $data['to'] === 'Lulus' ? 'Lulus' : $student->value('status')]]);
             }
