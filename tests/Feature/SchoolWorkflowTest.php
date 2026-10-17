@@ -49,7 +49,9 @@ class SchoolWorkflowTest extends CloudTestCase
         $this->post('/admin/ppdb/'.$applicant->id.'/offline', $payload)->assertRedirect();
         $this->assertCloudCount('admission_activations', 1);
         $this->assertSame('Aktif', $applicant->fresh()->value('status'));
-        $student = SchoolRecord::where('code', 'SCN-2027-013')->firstOrFail();
+        $student = SchoolRecord::ofKind('students')->where('data->applicant_id', $applicant->id)->firstOrFail();
+        $this->assertSame('PPDB-2027-013', $student->registrationNumber());
+        $this->assertNotSame('SCN-2027-013', $student->code);
         $this->assertSame('Indah Kirana', $student->value('guardian'));
         $this->post('/admin/ppdb/'.$applicant->id.'/offline', $payload)->assertRedirect('/admin/aktivasi/'.$student->id);
         $this->assertCloudCount('admission_activations', 1);

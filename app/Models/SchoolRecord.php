@@ -22,4 +22,15 @@ class SchoolRecord extends Fluent
     {
         return data_get($this->data, $key, $default);
     }
+
+    public function registrationNumber(): string
+    {
+        if ($this->kind === 'applicants') return (string) $this->code;
+        $number = $this->value('registration_number') ?: $this->value('number');
+        if (!$number && $this->value('applicant_id')) {
+            $number = self::ofKind('applicants')->find($this->value('applicant_id'))?->code;
+        }
+
+        return (string) ($number ?: '');
+    }
 }

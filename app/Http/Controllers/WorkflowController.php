@@ -43,14 +43,15 @@ class WorkflowController extends Controller
             if ($data['action'] === 'activate' && ! $complete) {
                 throw ValidationException::withMessages(['checks' => 'Lengkapi pemeriksaan dokumen asli dan pembayaran sebelum aktivasi siswa.']);
             }
-            $record->update(['data' => [...$record->data, ...$data, 'paid' => $complete || ! empty($data['paid']), 'payment' => ! empty($data['paid']) ? 'Tercatat' : 'Belum dicatat', 'status' => $complete ? 'Siap diaktifkan' : 'Menunggu daftar ulang']]);
+            $year = $record->value('year') ?: School::period()['year'];
+            $record->update(['data' => [...$record->data, ...$data, 'year' => $year, 'paid' => $complete || ! empty($data['paid']), 'payment' => ! empty($data['paid']) ? 'Tercatat' : 'Belum dicatat', 'status' => $complete ? 'Siap diaktifkan' : 'Menunggu daftar ulang']]);
             if ($data['action'] !== 'activate') {
                 School::log('Menyimpan daftar ulang '.$record->code, 'PPDB', 'Tersimpan');
 
                 return null;
             }
-            $nis = 'SCN-'.substr($record->code, 5);
-            $student = SchoolRecord::create(['kind' => 'students', 'code' => $nis, 'data' => [...$record->data, 'nis' => $nis, 'status' => 'Aktif', 'joined' => now()->toDateString(), 'applicant_id' => $record->id, 'address' => $record->value('address', ''), 'father' => $record->value('father', '')]]);
+            $nis = \App\Services\StudentNumber::next($year);
+            $student = SchoolRecord::create(['kind' => 'students', 'code' => $nis, 'data' => [...$record->data, 'nis' => $nis, 'registration_number' => $record->code, 'status' => 'Aktif', 'joined' => now()->toDateString(), 'applicant_id' => $record->id, 'address' => $record->value('address', ''), 'father' => $record->value('father', '')]]);
             DB::table('admission_activations')->insert(['applicant_id' => $record->id, 'student_id' => $student->id, 'created_at' => now(), 'updated_at' => now()]);
             $invoice = SchoolRecord::create(['kind' => 'invoices', 'code' => 'INV-'.$record->code, 'data' => ['name' => 'Biaya pendaftaran PPDB · '.$student->value('name'), 'student_id' => $student->id, 'class' => $data['class'], 'amount' => (int) $data['amount'], 'period' => $record->value('year'), 'due_date' => now()->toDateString(), 'type' => 'PPDB']]);
             DB::table('school_payments')->insert(['invoice_id' => $invoice->id, 'reference' => 'KW-'.$record->code, 'amount' => (int) $data['amount'], 'method' => $data['method'], 'status' => 'Terverifikasi', 'received_at' => now()->toDateString(), 'user_id' => auth()->id(), 'created_at' => now(), 'updated_at' => now()]);

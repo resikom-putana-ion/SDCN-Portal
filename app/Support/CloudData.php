@@ -66,6 +66,7 @@ class CloudData
                 'phone' => data_get($row, 'parent.phone', ''), 'email' => data_get($row, 'parent.email', ''),
                 'address' => data_get($row, 'parent.address', ''), 'status' => $extra['status'] ?? $status,
                 'notes' => $row['admin_notes'] ?? '', 'number' => $row['reference'] ?? $row['id'],
+                'year' => $extra['year'] ?? $row['year'] ?? '',
                 'date' => substr($row['created_at'] ?? '', 0, 10), 'payment' => $extra['payment'] ?? 'Belum dicatat',
                 'checks' => $extra['checks'] ?? [],
             ]),

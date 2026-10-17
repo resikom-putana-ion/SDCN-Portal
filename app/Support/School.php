@@ -23,6 +23,7 @@ class School
 
     public static function date($value): string
     {
+        if ($value === null || $value === '') return '—';
         try {
             return Carbon::parse($value)->locale('id')->translatedFormat('j M Y');
         } catch (\Throwable) {
