@@ -10,10 +10,10 @@
         }
     }
 @endphp
-<label class="field" @if($imageField) data-crop-field @endif>{{ \App\Services\ContentLabels::label($key) }}
+<label class="field" @if($imageField) data-crop-field @endif>{{ $key==='campus_image' ? 'Foto kampus (slide pertama)' : ($section==='home' && $key==='image' ? 'Foto kegiatan (slide berikutnya)' : \App\Services\ContentLabels::label(is_numeric(collect(explode('.',$key))->last()) ? $key : collect(explode('.',$key))->last())) }}
 @if($imageField)
-    @if($value)<img data-crop-preview src="{{ \App\Services\WebsiteContent::imageUrl((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" style="max-width:260px;height:150px;object-fit:cover;border-radius:12px">@endif
-    <input name="values[{{ $key }}]" value="{{ $shown }}" aria-label="Lokasi gambar {{ \App\Services\ContentLabels::label($key) }}">
+    @if($value)<img data-crop-preview src="{{ \App\Services\LandingPreview::asset((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" class="cms-image-preview">@endif
+    <details class="cms-image-path"><summary>Lokasi gambar</summary><input name="values[{{ $key }}]" value="{{ $shown }}" aria-label="Lokasi gambar {{ \App\Services\ContentLabels::label($key) }}"></details>
     <input type="file" name="uploads[{{ $fieldIndex }}]" accept=".jpg,.jpeg,.png,.webp" data-crop-input>
     <small>Pilih gambar maksimal 5 MB lalu potong pada grid; hasil unggahan maksimal 1 MB.@if(str_starts_with($key,'people.')) Kosongkan lokasi gambar untuk memakai potret bawaan.@endif</small>
 @elseif($options !== null)

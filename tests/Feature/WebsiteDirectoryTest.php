@@ -28,7 +28,7 @@ class WebsiteDirectoryTest extends CloudTestCase
         $this->assertSame(1, $draft['structure']['head']);
         $this->assertFalse($draft['demo_profiles']);
         $this->assertSame($before['team'], $draft['team']);
-        $this->get('/admin/website/preview')->assertOk()->assertSee('Nama kepala dari dashboard')->assertSee('Tim pengajar baru');
+        $this->get('/admin/website/preview/frame?page=teachers')->assertOk()->assertSee('Nama kepala dari dashboard')->assertSee('Tim pengajar baru');
         $content->publish();
         $saved = $this->store->get('content', 'teachers');
         TeacherDirectory::validate($saved);

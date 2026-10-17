@@ -13,7 +13,24 @@ class WebsiteController extends Controller
 {
     public function preview()
     {
-        return view('website.preview', ['title' => 'Tinjauan Isi Draf Website', 'group' => 'website', 'screen' => 'website', 'content' => School::content(true), 'period' => School::period(), 'preview' => true]);
+        return view('website.preview', ['title' => 'Pratinjau Website Sekolah', 'group' => 'website', 'screen' => 'website']);
+    }
+
+    public function frame(Request $request)
+    {
+        return response(\App\Services\LandingPreview::render(School::content(true), (string) $request->query('page', 'home'), $request->boolean('edit'))->render())
+            ->header('Cache-Control', 'private, no-store')
+            ->header('Content-Security-Policy', "form-action 'none'; frame-ancestors 'self'; base-uri 'none'");
+    }
+
+    public function previewChanges(Request $request, string $section, \App\Services\WebsiteContent $content, \App\Services\FirestoreFileStorage $files)
+    {
+        $section = $content->section($section);
+        $data = $this->candidate($request, $section, $content, $files, false);
+        $site = $content->all(true);
+        $site[$section] = $data;
+        $page = (string) $request->query('page', $section === 'settings' ? 'home' : $section);
+        return response(\App\Services\LandingPreview::render($site, $page, true)->render())->header('Cache-Control', 'private, no-store');
     }
 
     public function edit(string $section, \App\Services\WebsiteContent $content)
@@ -23,48 +40,63 @@ class WebsiteController extends Controller
         return view('website.edit', [
             'title' => 'Edit '.\App\Services\WebsiteContent::SECTIONS[$section], 'group' => 'website', 'screen' => 'halaman',
             'section' => $section, 'fields' => \Illuminate\Support\Arr::dot($editor['data']), 'version' => $editor['version'],
-            'data' => $editor['data'],
+            'data' => $editor['data'], 'blocks' => \App\Services\WebsiteEditor::blocks($section, $editor['data']),
         ]);
     }
 
     public function save(Request $request, string $section, \App\Services\WebsiteContent $content, \App\Services\FirestoreFileStorage $files)
     {
         $section = $content->section($section);
-        $request->validate(['values' => 'required|array', 'version' => 'required|string|size:64', 'uploads.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1024']);
         DB::transaction(function () use ($request, $section, $content, $files) {
-            $editor = $content->editor($section);
-            $data = $editor['data'];
-            $fields = \Illuminate\Support\Arr::dot($data);
-            $values = $request->input('values');
-            foreach ($fields as $key => $value) {
-                if (is_array($value)) continue;
-                if (str_ends_with($key, '.icon') || str_ends_with($key, '.portrait')) continue;
-                $new = array_key_exists($key, $values) ? $values[$key] : (is_bool($value) ? ($value ? '1' : '0') : (string) $value);
-                \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'nullable|string|max:10000'])->validate();
-                $new ??= '';
-                if (preg_match('/(^image$|_image$|^logo$|\.photo$)/', $key)) {
-                    if ($file = $request->file('uploads.'.array_search($key, array_keys($fields)))) {
-                        $path = 'media/'.Str::uuid().'.'.$file->guessExtension();
-                        $files->putUploadedFile($path, $file);
-                        $new = '/'.$path;
-                    }
-                    if (!(preg_match('/^people\.\d+\.photo$/', $key) && $new === '') && \App\Services\WebsiteContent::image($new) === '') {
-                        throw \Illuminate\Validation\ValidationException::withMessages(['values' => 'Gunakan gambar website yang tersedia atau unggah gambar baru.']);
-                    }
-                }
-                if ($key === 'email') \Illuminate\Support\Facades\Validator::make(['email' => $new], ['email' => 'required|email'])->validate();
-                if ($key === 'whatsapp') \Illuminate\Support\Facades\Validator::make(['whatsapp' => $new], ['whatsapp' => ['required', 'regex:/^\+?[0-9 ()-]{9,25}$/']])->validate();
-                if ($key === 'map_url') \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => ['required', 'regex:#^https://(?:www\.)?google\.com/maps/#i']])->validate();
-                if (is_bool($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'boolean'])->validate(); $new = (bool) $new; }
-                elseif (is_int($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'integer'])->validate(); $new = (int) $new; }
-                elseif (is_float($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'numeric'])->validate(); $new = (float) $new; }
-                \Illuminate\Support\Arr::set($data, $key, $new);
-            }
-            if ($section === 'teachers') \App\Services\TeacherDirectory::validate($data);
+            $data = $this->candidate($request, $section, $content, $files, true);
             $content->save($section, $data, $request->input('version'));
             School::log('Menyimpan draf '.\App\Services\WebsiteContent::SECTIONS[$section], 'Website', 'Draf');
         });
         return back()->with('success', 'Draf tersimpan. Tinjau dan terbitkan agar tampil di landing page.');
+    }
+
+    private function candidate(Request $request, string $section, \App\Services\WebsiteContent $content, \App\Services\FirestoreFileStorage $files, bool $persist): array
+    {
+        $request->validate(['values' => 'required_without:operation|array', 'version' => 'required|string|size:64', 'operation'=>'nullable|string|max:200', 'uploads.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1024']);
+        $editor = $content->editor($section);
+        if (!hash_equals($editor['version'], $request->input('version'))) throw \Illuminate\Validation\ValidationException::withMessages(['content'=>'Konten berubah sejak formulir dibuka. Muat ulang halaman sebelum menyimpan.']);
+        $data = $editor['data'];
+        $fields = \Illuminate\Support\Arr::dot($data);
+        $values = $request->input('values', []);
+        $previewImages = [];
+        foreach ($fields as $key => $value) {
+            if (is_array($value)) continue;
+            if (str_ends_with($key, '.icon') || str_ends_with($key, '.portrait')) continue;
+            $new = array_key_exists($key, $values) ? $values[$key] : (is_bool($value) ? ($value ? '1' : '0') : (string) $value);
+            \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'nullable|string|max:10000'])->validate();
+            $new ??= '';
+            if (preg_match('/(^image$|_image$|^logo$|\.photo$)/', $key)) {
+                if ($file = $request->file('uploads.'.array_search($key, array_keys($fields)))) {
+                    if ($persist) {
+                        $path = 'media/'.Str::uuid().'.'.$file->guessExtension();
+                        $files->putUploadedFile($path, $file);
+                        $new = '/'.$path;
+                    } else {
+                        $previewImages[$key] = 'data:'.$file->getMimeType().';base64,'.base64_encode($file->get());
+                    }
+                }
+                if (!(preg_match('/^people\.\d+\.photo$/', $key) && $new === '') && \App\Services\WebsiteContent::image($new) === '') {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['values' => 'Gunakan gambar website yang tersedia atau unggah gambar baru.']);
+                }
+            }
+            if ($key === 'email') \Illuminate\Support\Facades\Validator::make(['email' => $new], ['email' => 'required|email'])->validate();
+            if ($key === 'whatsapp') \Illuminate\Support\Facades\Validator::make(['whatsapp' => $new], ['whatsapp' => ['required', 'regex:/^\+?[0-9 ()-]{9,25}$/']])->validate();
+            if ($key === 'map_url') \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => ['required', 'regex:#^https://(?:www\.)?google\.com/maps/#i']])->validate();
+            if (is_bool($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'boolean'])->validate(); $new = (bool) $new; }
+            elseif (is_int($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'integer'])->validate(); $new = (int) $new; }
+            elseif (is_float($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'numeric'])->validate(); $new = (float) $new; }
+            \Illuminate\Support\Arr::set($data, $key, $new);
+        }
+        if ($section === 'teachers') \App\Services\TeacherDirectory::validate($data);
+        $data = \App\Services\WebsiteEditor::operation($data, $section, $request->input('operation'));
+        if ($section === 'teachers') \App\Services\TeacherDirectory::validate($data);
+        foreach ($previewImages as $key=>$url) \Illuminate\Support\Arr::set($data, $key, $url);
+        return $data;
     }
 
     public function publish(Request $request, \App\Services\WebsiteContent $content)

@@ -4,6 +4,10 @@ Implementasi Laravel dari paket desain A01–A08, W01–W05, dan Z01. Tata letak
 
 ## Jalankan di komputer ini
 
+Pembaruan editor: buka **Website sekolah → Ringkasan website**, pilih halaman, lalu klik **Edit bagian ini** pada pratinjau. Panel kanan mengedit satu bagian; direktori Guru & Staf menyediakan pencarian dan kelompok tim. Pratinjau mendukung desktop, tablet, dan ponsel serta perubahan yang belum disimpan. Simpan draf sebelum meninjau dan menerbitkan. Panduan integrasi kedua aplikasi tersedia di [docs/WEBSITE-INTEGRATION.md](docs/WEBSITE-INTEGRATION.md).
+
+Aktivasi PPDB mempertahankan nomor pendaftaran dan membuat NIS dengan urutan tersendiri (`SCN-TAHUN-NOMOR`). Kedua nomor tampil terpisah pada profil siswa dan hasil aktivasi. Profil dengan field lama yang belum lengkap tetap bisa dibuka; tahun ajaran pendaftar baru dilengkapi saat daftar ulang. NIS yang sudah tersimpan tidak dinomori ulang otomatis.
+
 Cara tanpa mengetik perintah: buka folder proyek di File Explorer, lalu klik dua kali **run.bat**. Biarkan jendela server terbuka selama website dipakai, lalu buka http://127.0.0.1:8017/login di browser. Hentikan dengan Ctrl+C. Jalankan satu server saja pada port 8017.
 
 Dari `E:\Admin Dashboard SDCN`:

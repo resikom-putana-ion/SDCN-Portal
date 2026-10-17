@@ -1,0 +1,214 @@
+diff --git a/app/Services/SchoolContent.php b/app/Services/SchoolContent.php
+index 4529483..7f5cc7f 100644
+--- a/app/Services/SchoolContent.php
++++ b/app/Services/SchoolContent.php
+@@ -8,18 +8,37 @@
+ class SchoolContent
+ {
+     public function __construct(private DocumentStore $store) {}
+-    public function defaults(): array { return require resource_path('content/site.php'); }
++    public function defaults(): array
++    {
++        $defaults = require resource_path('content/site.php');
++        $defaults['home'] += ['campus_image'=>'/assets/design/sd-ceria-nusantara-campus.png'];
++        return $defaults;
++    }
+     public function all(): array
+     {
+-        return Cache::remember('school-content-'.config('school.store'), 300, function () {
++        $content = Cache::remember('school-content-'.config('school.store'), 300, function () {
+             $content = $this->defaults();
+             foreach ($content as $key => $default) {
+                 $saved = $this->store->get('content', $key);
+-                if ($saved) { unset($saved['id']); $content[$key] = array_replace_recursive($default, $saved); }
++                if ($saved) { unset($saved['id']); $content[$key] = $this->merge($default, $saved); }
+             }
+             return $content;
+         });
++        $content['teachers'] = TeacherDirectory::withDefaults($content['teachers']);
++        $content['home'] += ['campus_image'=>'/assets/design/sd-ceria-nusantara-campus.png'];
++        return $content;
+     }
++    // Maps inherit defaults; lists replace complete lists so removed cards stay removed.
++    private function merge(array $defaults, array $saved): array
++    {
++        foreach ($saved as $key => $value) {
++            $defaults[$key] = isset($defaults[$key]) && is_array($defaults[$key]) && is_array($value)
++                && !array_is_list($defaults[$key]) && !array_is_list($value)
++                ? $this->merge($defaults[$key], $value) : $value;
++        }
++        return $defaults;
++    }
++
+     public function save(string $section, array $data): void
+     {
+         $this->store->put('content', $section, $data);
+diff --git a/resources/views/components/hero.blade.php b/resources/views/components/hero.blade.php
+index 0dc104b..575026f 100644
+--- a/resources/views/components/hero.blade.php
++++ b/resources/views/components/hero.blade.php
+@@ -14,7 +14,7 @@
+         @if($home)
+         <div class="hero-slides">
+             @foreach([
+-                ['src'=>'/assets/design/sd-ceria-nusantara-campus.png','alt'=>'Kawasan SD Ceria Nusantara dari udara','caption'=>'Kawasan SD Ceria Nusantara'],
++                ['src'=>$data['campus_image'] ?? '/assets/design/sd-ceria-nusantara-campus.png','alt'=>'Kawasan SD Ceria Nusantara dari udara','caption'=>'Kawasan SD Ceria Nusantara'],
+                 ['src'=>$data['image'],'alt'=>'Siswa belajar bersama di kelas','caption'=>'Belajar bersama','source'=>null],
+                 ['src'=>'/assets/design/asset-04.png','alt'=>'Suasana ruang kelas SD Ceria Nusantara','caption'=>'Ruang belajar yang ceria','source'=>null],
+             ] as $slide)
+diff --git a/resources/views/components/staff-portrait.blade.php b/resources/views/components/staff-portrait.blade.php
+index 672e375..824b4a2 100644
+--- a/resources/views/components/staff-portrait.blade.php
++++ b/resources/views/components/staff-portrait.blade.php
+@@ -1,2 +1,2 @@
+ @props(['index' => 0, 'name' => 'Profil anggota tim', 'photo' => null])
+-<span {{ $attributes->class(['staff-portrait']) }} role="img" aria-label="Foto dummy {{ $name }}" @if($photo) style="background-image: url('{{ $photo }}'); background-size: cover; background-position: center;" @else style="--portrait-x: {{ ($index % 5) * 25 }}%; --portrait-y: {{ intdiv($index, 5) * 20 }}%" @endif></span>
++<span {{ $attributes->class(['staff-portrait']) }} role="img" aria-label="Foto {{ $name }}" @if($photo) style="background-image: url('{{ $photo }}'); background-size: cover; background-position: center;" @else style="--portrait-x: {{ ($index % 5) * 25 }}%; --portrait-y: {{ intdiv($index, 5) * 20 }}%" @endif></span>
+diff --git a/resources/views/pages/teachers.blade.php b/resources/views/pages/teachers.blade.php
+index ff5fad0..fd789d8 100644
+--- a/resources/views/pages/teachers.blade.php
++++ b/resources/views/pages/teachers.blade.php
+@@ -2,16 +2,16 @@
+ @section('title','Guru & Staf — SD Ceria Nusantara')
+ @section('content')
+ @php
+-    $directory = require resource_path('content/staff-directory.php');
++    $directory = $site['teachers'];
+     $people = $directory['people'];
+     $structure = $directory['structure'];
+     $groupCounts = array_count_values(array_column($people, 'group'));
+ @endphp
+ <section class="people-hero outer">
+-    <div><p class="eyebrow">KENALI KELUARGA SEKOLAH KAMI</p><h1>Wajah ramah,<br>teman tumbuh anak.</h1><p>Di kelas, di perpustakaan, hingga di gerbang sekolah—ada tim yang siap mendampingi langkah kecil buah hati Anda.</p><div class="people-hero-actions"><a class="button" href="#direktori">Berkenalan dengan tim ↗</a><a class="text-link" href="#struktur">Lihat struktur sekolah ↓</a></div><div class="people-facts"><span><strong>6</strong> jenjang kelas</span><span><strong>{{ count($people) }}</strong> profil contoh</span><span><strong>1</strong> semangat mendampingi</span></div></div>
+-    <div class="people-hero-photo"><x-staff-portrait :index="$people[0]['portrait']" :name="$people[0]['name']"/><div class="people-photo-note"><span aria-hidden="true">♡</span><div><strong>Setiap anak dikenal,</strong><br>setiap keluarga didengar.</div></div><span class="people-photo-badge">Bertumbuh bersama</span></div>
++    <div><p class="eyebrow">{{ $directory['directory_eyebrow'] }}</p><h1>{!! nl2br(e($directory['directory_title'])) !!}</h1><p>{{ $directory['directory_description'] }}</p><div class="people-hero-actions"><a class="button" href="#direktori">Berkenalan dengan tim ↗</a><a class="text-link" href="#struktur">Lihat struktur sekolah ↓</a></div><div class="people-facts"><span><strong>6</strong> jenjang kelas</span><span><strong>{{ count($people) }}</strong> {{ $directory['demo_profiles'] ? 'profil contoh' : 'anggota tim' }}</span><span><strong>1</strong> semangat mendampingi</span></div></div>
++    <div class="people-hero-photo"><x-staff-portrait :index="$people[$structure['head']]['portrait']" :name="$people[$structure['head']]['name']" :photo="$people[$structure['head']]['photo'] ?? null"/><div class="people-photo-note"><span aria-hidden="true">♡</span><div><strong>Setiap anak dikenal,</strong><br>setiap keluarga didengar.</div></div><span class="people-photo-badge">Bertumbuh bersama</span></div>
+ </section>
+-<div class="container people-demo-note"><span aria-hidden="true">ⓘ</span><p><strong>Contoh profil sekolah.</strong> Seluruh nama, foto, jabatan, dan pembagian tugas di halaman ini adalah data dummy. Susunan guru, layanan, dan mata pelajaran sebenarnya perlu dikonfirmasi kepada sekolah.</p></div>
++@if($directory['demo_profiles'])<div class="container people-demo-note"><span aria-hidden="true">ⓘ</span><p><strong>Contoh profil sekolah.</strong> Seluruh nama, foto, jabatan, dan pembagian tugas di halaman ini adalah data dummy. Susunan guru, layanan, dan mata pelajaran sebenarnya perlu dikonfirmasi kepada sekolah.</p></div>@endif
+ <section class="section people-values"><div class="container"><x-heading eyebrow="LEBIH DARI MENGAJAR" title="Mendampingi dengan hati" subtitle="Kami ingin anak merasa aman, orang tua merasa tenang, dan komunikasi selalu terbuka."/><x-cards :items="$site['teachers']['values']"/></div></section>
+ <section class="section tinted" id="direktori"><div class="container">
+     <x-heading eyebrow="ORANG-ORANG DI BALIK CERITA ANAK" title="Mari berkenalan dengan tim" subtitle="Kenali peran setiap orang, agar Anda tahu siapa yang dapat membantu."/>
+diff --git a/app/Services/TeacherDirectory.php b/app/Services/TeacherDirectory.php
+new file mode 100644
+--- /dev/null
++++ b/app/Services/TeacherDirectory.php
+@@ -0,0 +1,59 @@
++<?php
++
++namespace App\Services;
++
++use Illuminate\Support\Facades\Validator;
++use Illuminate\Validation\Rule;
++
++// Shared content contract: keep this class and the fallback resource in both projects.
++class TeacherDirectory
++{
++    public static function defaults(): array
++    {
++        return (require resource_path('content/staff-directory.php')) + [
++            'directory_eyebrow' => 'KENALI KELUARGA SEKOLAH KAMI',
++            'directory_title' => "Wajah ramah,\nteman tumbuh anak.",
++            'directory_description' => 'Di kelas, di perpustakaan, hingga di gerbang sekolah—ada tim yang siap mendampingi langkah kecil buah hati Anda.',
++            'demo_profiles' => true,
++        ];
++    }
++
++    public static function withDefaults(array $saved): array
++    {
++        $data = $saved + self::defaults();
++        $data['people'] = array_map(fn (array $person) => $person + ['photo'=>null], $data['people']);
++        return $data;
++    }
++
++    public static function validate(array $data): void
++    {
++        $indices = array_keys($data['people'] ?? []);
++        Validator::make($data, [
++            'people' => ['required', 'array', 'list', 'min:1', 'max:100'],
++            'people.*.name' => 'required|string|max:150',
++            'people.*.role' => 'required|string|max:150',
++            'people.*.description' => 'required|string|max:2000',
++            'people.*.group' => ['required', Rule::in(['pimpinan', 'guru', 'staf'])],
++            'people.*.portrait' => 'required|integer|min:0|max:29',
++            'people.*.photo' => ['nullable', 'string', 'regex:#^/(?:assets/(?:design|team)|media)/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$#'],
++            'subjects' => 'present|array|list|max:100',
++            'subjects.*.title' => 'required|string|max:150',
++            'subjects.*.by' => 'required|string|max:300',
++            'subjects.*.text' => 'required|string|max:2000',
++            'structure.head' => ['required', 'integer', Rule::in($indices)],
++            'structure.branches' => 'present|array|list|max:30',
++            'structure.branches.*.title' => 'required|string|max:150',
++            'structure.branches.*.summary' => 'required|string|max:2000',
++            'structure.branches.*.tone' => ['required', Rule::in(['blue', 'green', 'yellow'])],
++            'structure.branches.*.lead' => ['required', 'integer', Rule::in($indices)],
++            'structure.branches.*.teams' => 'present|array|list|max:100',
++            'structure.branches.*.teams.*.title' => 'required|string|max:150',
++            'structure.branches.*.teams.*.members' => 'present|array|list|max:100',
++            'structure.branches.*.teams.*.members.*' => ['required', 'integer', Rule::in($indices)],
++            'directory_eyebrow' => 'required|string|max:150',
++            'directory_title' => 'required|string|max:300',
++            'directory_description' => 'required|string|max:2000',
++            'demo_profiles' => 'required|boolean',
++        ], ['in' => 'Pilihan :attribute tidak tersedia. Pilih anggota atau kategori yang ada.'])->validate();
++    }
++}
+diff --git a/tests/Feature/SharedTeacherContentTest.php b/tests/Feature/SharedTeacherContentTest.php
+new file mode 100644
+--- /dev/null
++++ b/tests/Feature/SharedTeacherContentTest.php
+@@ -0,0 +1,54 @@
++<?php
++
++namespace Tests\Feature;
++
++use App\Services\SchoolContent;
++use App\Services\TeacherDirectory;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Illuminate\Support\Facades\Http;
++use Tests\TestCase;
++
++class SharedTeacherContentTest extends TestCase
++{
++    use RefreshDatabase;
++
++    public function test_directory_and_hero_read_the_shared_content_instead_of_local_profiles(): void
++    {
++        Http::preventStrayRequests();
++        $content = app(SchoolContent::class);
++        $teachers = $content->defaults()['teachers'] + TeacherDirectory::defaults();
++        $teachers['people'][1]['name'] = 'KEPALA DARI DASHBOARD';
++        $teachers['people'][1]['photo'] = '/media/kepala-baru.jpg';
++        $teachers['structure']['head'] = 1;
++        $teachers['directory_title'] = '<script>Judul dari dashboard</script>';
++        $teachers['subjects'][0]['by'] = 'Tim baru dari dashboard';
++        $teachers['demo_profiles'] = false;
++        $content->save('teachers',$teachers);
++        $this->get('/guru-staf')->assertOk()->assertSee('KEPALA DARI DASHBOARD')
++            ->assertSee('/media/kepala-baru.jpg',false)->assertSee('Tim baru dari dashboard')
++            ->assertSee('&lt;script&gt;Judul dari dashboard&lt;/script&gt;',false)
++            ->assertDontSee('<script>Judul dari dashboard</script>',false)
++            ->assertDontSee('Contoh profil sekolah.');
++    }
++
++    public function test_short_and_empty_published_lists_do_not_restore_default_cards(): void
++    {
++        Http::preventStrayRequests();
++        $content = app(SchoolContent::class);
++        $content->save('teachers',['team'=>[['name'=>'Satu anggota','role'=>'Guru','photo'=>'/media/guru.jpg']]]);
++        $content->save('gallery',['news'=>[]]);
++        $site = $content->all();
++        $this->assertCount(1,$site['teachers']['team']);
++        $this->assertCount(30,$site['teachers']['people']);
++        $this->assertSame([],$site['gallery']['news']);
++        $this->get('/')->assertOk();
++        $this->get('/galeri')->assertOk();
++    }
++
++    public function test_first_hero_slide_uses_the_campus_photo_from_the_dashboard(): void
++    {
++        Http::preventStrayRequests();
++        app(SchoolContent::class)->save('home',['campus_image'=>'/media/kampus-baru.jpg']);
++        $this->get('/')->assertOk()->assertSee('src="/media/kampus-baru.jpg"',false);
++    }
++}

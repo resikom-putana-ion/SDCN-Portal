@@ -20,7 +20,9 @@ class TeacherDirectory
 
     public static function withDefaults(array $saved): array
     {
-        return $saved + self::defaults();
+        $data = $saved + self::defaults();
+        $data['people'] = array_map(fn (array $person) => $person + ['photo'=>null], $data['people']);
+        return $data;
     }
 
     public static function validate(array $data): void

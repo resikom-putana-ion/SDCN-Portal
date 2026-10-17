@@ -89,11 +89,11 @@ class SchoolWorkflowTest extends CloudTestCase
         $hero['title'] = 'Judul baru belum terbit';
         $this->post('/admin/website/hero/edit', ['values' => \Illuminate\Support\Arr::dot($hero), 'version' => app(\App\Services\WebsiteContent::class)->editor('home')['version']])->assertSessionHasNoErrors();
         $this->get('/website')->assertNotFound();
-        $this->get('/admin/website/preview')->assertSee('Judul baru belum terbit');
+        $this->get('/admin/website/preview/frame')->assertSee('Judul baru belum terbit');
         $this->post('/admin/website/publish', ['checks' => ['text'], 'notes' => 'Sudah diperiksa'])->assertSessionHasErrors('checks');
         $this->post('/admin/website/publish', ['checks' => ['text', 'image', 'contact', 'period', 'offline'], 'notes' => 'Sudah diperiksa'])->assertRedirect('/admin/terbit');
         $this->assertSame('Judul baru belum terbit', DB::store()->get('content', 'home')['title']);
-        $this->get('/admin/website/preview')->assertSee('Judul baru belum terbit');
+        $this->get('/admin/website/preview/frame')->assertSee('Judul baru belum terbit');
     }
 
     public function test_public_application_stores_private_documents_and_no_active_student(): void
@@ -143,7 +143,7 @@ class SchoolWorkflowTest extends CloudTestCase
         $data = [...$settings->data, 'email' => 'kontakbaru@example.com'];
         $this->post('/admin/record/settings/'.$settings->id, $data)->assertSessionHasNoErrors();
         $this->get('/website')->assertDontSee('kontakbaru@example.com');
-        $this->get('/admin/website/preview')->assertSee('kontakbaru@example.com');
+        $this->get('/admin/website/preview/frame')->assertSee('kontakbaru@example.com');
     }
 
     public function test_payment_review_requires_confirmation_and_preserves_review_details(): void

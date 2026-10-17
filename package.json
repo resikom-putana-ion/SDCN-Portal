@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "test:browser": "node tests/Browser/check.cjs",
-        "test:crop": "node tests/Browser/crop.cjs"
+        "test:crop": "node tests/Browser/crop.cjs",
+        "test:editor": "node tests/Browser/editor.cjs"
     },
     "devDependencies": {
         "playwright": "1.63.0"

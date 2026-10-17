@@ -73,7 +73,9 @@ Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAd
     Route::post('/website/media', [WebsiteController::class, 'upload']);
     Route::post('/website/publish', [WebsiteController::class, 'publish']);
     Route::get('/website/preview', [WebsiteController::class, 'preview']);
+    Route::get('/website/preview/frame', [WebsiteController::class, 'frame']);
     Route::get('/website/{section}/edit', [WebsiteController::class, 'edit']);
     Route::post('/website/{section}/edit', [WebsiteController::class, 'save']);
+    Route::post('/website/{section}/preview', [WebsiteController::class, 'previewChanges']);
     Route::get('/{screen}/{id?}/{tab?}', [AdminController::class, 'page'])->where('screen', '[a-z-]+');
 });

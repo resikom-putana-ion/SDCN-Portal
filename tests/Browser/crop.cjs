@@ -39,7 +39,12 @@ execFileSync(php, [path.join(__dirname, 'render-crop-fixtures.php')], { cwd: roo
         };
         const apply = async () => {
             await page.getByRole('button', { name: 'Gunakan potongan', exact: true }).click();
-            await page.locator('[data-photo-dialog]').waitFor({ state: 'hidden' });
+            try {
+                await page.locator('[data-photo-dialog]').waitFor({ state: 'hidden', timeout: 30000 });
+            } catch (error) {
+                await page.screenshot({ path: path.join(output, 'crop-failure.png'), fullPage: true });
+                throw new Error('Crop failed: ' + await page.locator('[data-crop-dialog-error]').textContent(), { cause: error });
+            }
         };
         const box = () => page.locator('[data-crop-frame]').boundingBox();
         const drag = async (from, to) => {

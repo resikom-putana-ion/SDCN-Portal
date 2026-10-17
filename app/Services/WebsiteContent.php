@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 
 class WebsiteContent
 {
+    public const HOME_DEFAULTS = ['campus_image'=>'/assets/design/sd-ceria-nusantara-campus.png'];
     public const SECTIONS = ['settings' => 'Informasi Sekolah & PPDB', 'home' => 'Beranda', 'about' => 'Profil Sekolah', 'program' => 'Program', 'facilities' => 'Fasilitas', 'teachers' => 'Guru & Staf', 'gallery' => 'Berita & Galeri', 'contact' => 'Kontak'];
     public function section(string $section): string
     {
@@ -33,6 +34,7 @@ class WebsiteContent
             if (isset($all[$row['id']])) $all[$row['id']] = $this->mergeDraft($all[$row['id']], $row, false);
         }
         if (isset($all['teachers'])) $all['teachers'] = TeacherDirectory::withDefaults($all['teachers']);
+        if (isset($all['home'])) $all['home'] += self::HOME_DEFAULTS;
         return $all;
     }
     public function editor(string $section): array
@@ -43,6 +45,7 @@ class WebsiteContent
         $draft = CloudData::store()->get('dashboard_content_drafts', $section);
         $data = $draft ? $this->mergeDraft($published, $draft, false) : $published;
         if ($section === 'teachers') $data = TeacherDirectory::withDefaults($data);
+        if ($section === 'home') $data += self::HOME_DEFAULTS;
         return ['published' => $published, 'data' => $data,
             'version' => self::fingerprint([$published, $draft]), 'draft' => $draft];
     }

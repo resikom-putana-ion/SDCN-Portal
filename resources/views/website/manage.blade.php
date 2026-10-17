@@ -1,15 +1,22 @@
 @extends('layouts.app')
 @section('content')
+<link rel="stylesheet" href="/css/website-editor.css">
 @include('website.toolbar')
 @php
-$content=app(\App\Services\WebsiteContent::class)->all();
+$content=app(\App\Services\WebsiteContent::class)->all(true);
 $drafts=collect(\App\Support\CloudData::collection('dashboard_content_drafts'))->keyBy('id');
 $rows=collect(\App\Services\WebsiteContent::SECTIONS)->map(fn($name,$key)=>['name'=>$name,'summary'=>$content[$key]['title']??$content[$key]['school_name']??'', 'date'=>$drafts->get($key)['updated_at']??'?','author'=>$drafts->get($key)['author']??'?','status'=>$drafts->has($key)?'Draf':'Terbit','_url'=>'/admin/website/'.$key.'/edit']);
 @endphp
 @if(in_array($screen,['website','halaman']))
-@if($screen==='website')<x-stats :items="[[count($content),'Bagian website','globe'],[$drafts->count(),'Draf untuk ditinjau','file'],[\App\Models\SchoolRecord::ofKind('applicants')->count(),'Pendaftar online','users']]"/>
-<x-card title="Landing page sekolah"><h1>{{ $content['home']['title']??'Website sekolah' }}</h1><p class="muted">{{ $content['home']['description']??'' }}</p><div class="actions"><a href="{{ config('school.landing_url') }}" class="btn secondary" target="_blank" rel="noopener">Buka landing page</a><a href="/admin/website/home/edit" class="btn">Edit beranda</a></div></x-card>@endif
-<x-table :columns="['name'=>'Bagian website','summary'=>'Isi utama','date'=>'Draf diperbarui','status'=>'Status']" :rows="$rows"/>
+<div class="cms">
+<div class="cms-topline"><div><span class="cms-eyebrow">KONTEN SEKOLAH</span><h2>Halaman yang ingin Anda ubah</h2><p>Pilih halaman, klik bagiannya, lalu edit dari pratinjau landing page.</p></div><a class="btn secondary" href="{{ config('school.landing_url') }}" target="_blank" rel="noopener">Buka website publik</a></div>
+<div class="cms-guide"><span>01 &middot; Pilih & edit<small>Susunan mengikuti halaman website.</small></span><span>02 &middot; Periksa pratinjau<small>Coba desktop, tablet, dan ponsel.</small></span><span>03 &middot; Terbitkan<small>Draf diperiksa sebelum tampil ke publik.</small></span></div>
+<div class="cms-page-grid">
+@foreach(\App\Services\LandingPreview::PAGES + ['settings'=>'Informasi sekolah & PPDB'] as $key=>$label)
+@php($pageData=$content[$key]??[])
+<article class="cms-page-card"><div class="cms-page-card-inner"><div class="cms-page-cover"><img src="{{ \App\Services\LandingPreview::asset($pageData['image']??$pageData['logo']??$content['home']['image']??'') }}" alt="" loading="lazy"><x-badge :value="$drafts->has($key)?'Draf':'Terbit'"/></div><div class="cms-page-copy"><h3>{{ $label }}</h3><p>{{ \Illuminate\Support\Str::limit($pageData['directory_description']??$pageData['description']??$pageData['tagline']??'Kelola informasi yang tampil di website sekolah.',120) }}</p><div class="actions"><a class="btn" href="/admin/website/{{ $key }}/edit">Edit halaman</a><a class="btn secondary" href="/admin/website/preview?page={{ $key==='settings'?'home':$key }}">Pratinjau</a></div></div></div></article>
+@endforeach
+</div></div>
 @elseif($screen==='publikasi')
 <x-table :columns="['name'=>'Bagian','summary'=>'Isi','author'=>'Editor','status'=>'Status']" :rows="$rows->where('status','Draf')"/>
 <form method="post" action="/admin/website/publish" data-confirm="Terbitkan draf ke landing page sekolah?">@csrf
