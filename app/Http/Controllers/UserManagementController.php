@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Exceptions\FirebaseAuthException;
 use App\Services\FirebaseAuth;
+use App\Services\AccountDeletion;
 use App\Support\CloudData;
 use App\Support\School;
 use Illuminate\Http\Request;
@@ -51,8 +52,10 @@ class UserManagementController extends Controller
             'email' => ['required', 'email', 'max:190'],
             'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed'],
         ], $this->messages());
+        // The account holder fills in their own identity after verifying their email.
+        $data['name'] = mb_substr(explode('@', $data['email'])[0], 0, 150);
         $id = hash('sha256', $data['email']);
-        $this->authorizeOwner($request);
+        $this->authorizeManager($request);
         if (User::find($id)) {
             throw ValidationException::withMessages(['email' => 'Email ini sudah digunakan oleh akun lain.']);
         }
@@ -71,7 +74,7 @@ class UserManagementController extends Controller
 
         try {
             CloudData::transaction(function () use ($request, $data, $id, $password, $uid) {
-                $this->authorizeOwner($request);
+                $this->authorizeManager($request);
                 $created = CloudData::store()->create('admins', $id, [
                     'name' => $data['name'], 'email' => $data['email'], 'password' => $password,
                     'role' => $data['role'], 'active' => (bool) $data['active'], 'remember_token' => '',
@@ -104,9 +107,12 @@ class UserManagementController extends Controller
     {
         $data = $request->validate($this->rules(), $this->messages());
         CloudData::transaction(function () use ($request, $account, $data) {
-            $this->authorizeOwner($request);
+            $this->authorizeManager($request);
             $row = CloudData::store()->get('admins', $account);
             abort_unless($row, 404);
+            if (! empty($row['deletion_pending'])) {
+                throw ValidationException::withMessages(['active' => 'Akun sedang dihapus. Selesaikan penghapusan melalui daftar pengguna.']);
+            }
             if (($row['role'] ?? '') === 'owner' && ($row['active'] ?? false) === true
                 && ($data['role'] !== 'owner' || !(bool) $data['active'])) {
                 $otherOwner = User::all()->contains(fn ($user) => (string) $user->id !== $account && $user->isOwner() && $user->active === true);
@@ -118,18 +124,18 @@ class UserManagementController extends Controller
                 $row['remember_token'] = '';
             }
             $row = array_replace($row, [
-                'name' => $data['name'], 'role' => $data['role'], 'active' => (bool) $data['active'],
+                'role' => $data['role'], 'active' => (bool) $data['active'],
                 'updated_at' => now()->toIso8601String(),
             ]);
             CloudData::store()->put('admins', $account, $row);
-            School::log('Mengubah akun '.$data['name'].' menjadi '.User::ROLES[$data['role']], 'users', $row['active'] ? 'Aktif' : 'Nonaktif');
+            School::log('Mengubah akun '.$row['name'].' menjadi '.User::ROLES[$data['role']], 'users', $row['active'] ? 'Aktif' : 'Nonaktif');
         });
 
         $updated = User::find($account);
         if ($updated->firebase_uid) {
             try {
                 app(FirebaseAuth::class)->update($updated->firebase_uid, [
-                    'displayName' => $updated->name, 'disableUser' => ! $updated->active,
+                    'disableUser' => ! $updated->active,
                 ]);
             } catch (FirebaseAuthException) {
                 // The local active flag is authoritative and already denies dashboard access.
@@ -145,20 +151,53 @@ class UserManagementController extends Controller
             return redirect('/login')->with('success', 'Akun Anda telah dinonaktifkan.');
         }
 
+        if ($account === (string) $request->user()->id && ! $updated->hasFullSchoolAccess()) {
+            return redirect('/admin')->with('success', 'Role Anda telah diperbarui. Menu menyesuaikan akses baru.');
+        }
+
         return redirect('/admin/pengguna')->with('success', 'Perubahan akun berhasil disimpan.');
     }
 
-    private function authorizeOwner(Request $request): void
+    private function authorizeManager(Request $request): void
     {
-        // Recheck inside the transaction so a revoked owner cannot commit stale access.
-        $owner = User::find($request->user()->id);
-        abort_unless($owner?->isOwner() && $owner?->active === true, 403, 'Hanya Owner yang dapat mengelola akun pengguna.');
+        // Recheck inside the transaction so revoked managers cannot commit stale access.
+        $manager = User::find($request->user()->id);
+        abort_unless($manager?->hasFullSchoolAccess() && $manager?->active === true, 403, 'Hanya Owner dan Admin yang dapat mengelola akun pengguna.');
+    }
+
+    public function confirmDelete(Request $request, AccountDeletion $deletion, ?string $account = null)
+    {
+        $ids = $account !== null ? [$account] : $this->deletionIds($request);
+        return view('admin.users.delete', $this->pageData('Hapus Akun Pengelola') + [
+            'accounts' => $deletion->preview((string) $request->user()->id, $ids),
+        ]);
+    }
+
+    public function destroy(Request $request, AccountDeletion $deletion)
+    {
+        $ids = $this->deletionIds($request);
+        $request->validate(['confirmation' => ['required', 'in:HAPUS']], [
+            'confirmation.required' => 'Ketik HAPUS untuk mengonfirmasi penghapusan akun.',
+            'confirmation.in' => 'Konfirmasi harus berupa kata HAPUS.',
+        ]);
+        $result = $deletion->delete((string) $request->user()->id, $ids);
+        if ($result['failed']) {
+            return redirect('/admin/pengguna')->withErrors(['accounts' => $result['deleted'].' akun berhasil dihapus. '.$result['failed'].' akun belum selesai dihapus dan aksesnya sudah dinonaktifkan. Pilih "Lanjutkan hapus" untuk mencoba lagi.']);
+        }
+        return redirect('/admin/pengguna')->with('success', $result['deleted'].' akun pengelola berhasil dihapus permanen.');
+    }
+
+    private function deletionIds(Request $request): array
+    {
+        return $request->validate([
+            'accounts' => ['required', 'array', 'min:1', 'max:20'],
+            'accounts.*' => ['required', 'string', 'max:128', 'distinct'],
+        ], ['accounts.required' => 'Pilih akun yang ingin dihapus.', 'accounts.max' => 'Pilih maksimal 20 akun dalam satu penghapusan.'])['accounts'];
     }
 
     private function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:150'],
             'role' => ['required', Rule::in(array_keys(User::ROLES))],
             'active' => ['required', 'boolean'],
         ];

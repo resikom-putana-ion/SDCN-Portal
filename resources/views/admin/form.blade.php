@@ -19,7 +19,9 @@ $fullAccess = \App\Support\SchoolAccess::hasFullAccess(auth()->user());
 <div class="form-grid">
 <label class="field">Nama admin<input name="name" value="{{ old('name', auth()->user()->name) }}" required maxlength="150" autocomplete="name"></label>
 <label class="field">Email akun<input type="email" value="{{ auth()->user()->email }}" readonly></label>
+<label class="field">Nomor HP pribadi<input type="tel" name="phone" value="{{ old('phone', auth()->user()->phone ?? '') }}" maxlength="30" autocomplete="tel" placeholder="08... atau +62..."><small class="muted">Nomor kontak pribadi, belum diverifikasi melalui SMS.</small></label>
 </div>
+<p class="muted">Hanya Anda yang dapat mengubah nama, nomor HP, dan foto profil ini. Email login tetap.</p>
 <x-student-photo :admin="true"/>
 <div class="actions"><button class="btn">Simpan profil admin</button></div>
 </form>

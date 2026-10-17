@@ -13,7 +13,7 @@ class WebsiteController extends Controller
 {
     public function preview()
     {
-        return view('website.preview', ['title' => 'Pratinjau Landing Page', 'group' => 'website', 'screen' => 'website', 'content' => School::content(true), 'period' => School::period(), 'preview' => true]);
+        return view('website.preview', ['title' => 'Tinjauan Isi Draf Website', 'group' => 'website', 'screen' => 'website', 'content' => School::content(true), 'period' => School::period(), 'preview' => true]);
     }
 
     public function edit(string $section, \App\Services\WebsiteContent $content)
@@ -23,6 +23,7 @@ class WebsiteController extends Controller
         return view('website.edit', [
             'title' => 'Edit '.\App\Services\WebsiteContent::SECTIONS[$section], 'group' => 'website', 'screen' => 'halaman',
             'section' => $section, 'fields' => \Illuminate\Support\Arr::dot($editor['data']), 'version' => $editor['version'],
+            'data' => $editor['data'],
         ]);
     }
 
@@ -37,24 +38,29 @@ class WebsiteController extends Controller
             $values = $request->input('values');
             foreach ($fields as $key => $value) {
                 if (is_array($value)) continue;
-                $new = $values[$key] ?? $value;
+                if (str_ends_with($key, '.icon') || str_ends_with($key, '.portrait')) continue;
+                $new = array_key_exists($key, $values) ? $values[$key] : (is_bool($value) ? ($value ? '1' : '0') : (string) $value);
                 \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'nullable|string|max:10000'])->validate();
                 $new ??= '';
                 if (preg_match('/(^image$|_image$|^logo$|\.photo$)/', $key)) {
-                    if (\App\Services\WebsiteContent::image($new) === '') throw \Illuminate\Validation\ValidationException::withMessages(['values' => 'Gunakan gambar website yang tersedia atau unggah gambar baru.']);
                     if ($file = $request->file('uploads.'.array_search($key, array_keys($fields)))) {
                         $path = 'media/'.Str::uuid().'.'.$file->guessExtension();
                         $files->putUploadedFile($path, $file);
                         $new = '/'.$path;
                     }
+                    if (!(preg_match('/^people\.\d+\.photo$/', $key) && $new === '') && \App\Services\WebsiteContent::image($new) === '') {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['values' => 'Gunakan gambar website yang tersedia atau unggah gambar baru.']);
+                    }
                 }
                 if ($key === 'email') \Illuminate\Support\Facades\Validator::make(['email' => $new], ['email' => 'required|email'])->validate();
                 if ($key === 'whatsapp') \Illuminate\Support\Facades\Validator::make(['whatsapp' => $new], ['whatsapp' => ['required', 'regex:/^\+?[0-9 ()-]{9,25}$/']])->validate();
-                if (is_bool($value)) $new = filter_var($new, FILTER_VALIDATE_BOOLEAN);
+                if ($key === 'map_url') \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => ['required', 'regex:#^https://(?:www\.)?google\.com/maps/#i']])->validate();
+                if (is_bool($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'boolean'])->validate(); $new = (bool) $new; }
                 elseif (is_int($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'integer'])->validate(); $new = (int) $new; }
                 elseif (is_float($value)) { \Illuminate\Support\Facades\Validator::make(['value' => $new], ['value' => 'numeric'])->validate(); $new = (float) $new; }
                 \Illuminate\Support\Arr::set($data, $key, $new);
             }
+            if ($section === 'teachers') \App\Services\TeacherDirectory::validate($data);
             $content->save($section, $data, $request->input('version'));
             School::log('Menyimpan draf '.\App\Services\WebsiteContent::SECTIONS[$section], 'Website', 'Draf');
         });

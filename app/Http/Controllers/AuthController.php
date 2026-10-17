@@ -28,6 +28,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
         if (Auth::user()->usesFirebaseAuth()) {
             $request->session()->put('firebase_auth_version', Auth::user()->getAuthPassword());
+            if (! (Auth::user()->email_verified ?? false)) return redirect('/verify-email');
         }
 
         return redirect()->intended('/admin');

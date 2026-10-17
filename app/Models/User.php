@@ -41,6 +41,13 @@ class User extends GenericUser implements CanResetPasswordContract
         return in_array($this->role, ['owner', 'admin'], true);
     }
 
+    public function canDeleteAccount(self $account): bool
+    {
+        return $this->active === true && $this->hasFullSchoolAccess()
+            && (string) $this->id !== (string) $account->id
+            && ($this->isOwner() || ! $account->isOwner());
+    }
+
     private string $rememberCookieToken = '';
     // The stored token is hashed; issue a fresh raw cookie token for each login.
     public function getRememberToken() { return $this->rememberCookieToken; }
@@ -48,11 +55,11 @@ class User extends GenericUser implements CanResetPasswordContract
     public static function find($id): ?self
     {
         $row = CloudData::store()->get('admins', (string) $id);
-        return $row ? new self($row + ['password' => '', 'firebase_uid' => null, 'firebase_remember_version' => '', 'remember_token' => '', 'updated_at' => $row['created_at'] ?? null]) : null;
+        return $row ? new self($row + ['password' => '', 'firebase_uid' => null, 'firebase_remember_version' => '', 'remember_token' => '', 'deletion_pending' => false, 'photo_path' => null, 'updated_at' => $row['created_at'] ?? null]) : null;
     }
     public static function all(): \Illuminate\Support\Collection
     {
-        return collect(CloudData::collection('admins'))->map(fn ($row) => new self($row + ['updated_at' => $row['created_at'] ?? null]));
+        return collect(CloudData::collection('admins'))->map(fn ($row) => new self($row + ['deletion_pending' => false, 'updated_at' => $row['created_at'] ?? null]));
     }
     public function setPassword(string $password): void
     {

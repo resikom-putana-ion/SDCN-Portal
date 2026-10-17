@@ -41,4 +41,25 @@ class AdminProfileTest extends CloudTestCase
         $parent = new User(['id' => 'parent', 'role' => 'parent', 'active' => true]);
         $this->actingAs($parent)->post('/admin/profil-admin', ['name' => 'Other'])->assertForbidden();
     }
+
+    public function test_every_role_can_edit_only_own_identity_and_contact_phone(): void
+    {
+        foreach (array_keys(User::ROLES) as $role) {
+            $id = hash('sha256', $role.'@example.test');
+            $this->store->put('admins', $id, ['name' => $role, 'email' => $role.'@example.test', 'role' => $role, 'active' => true, 'password' => 'unchanged']);
+            $this->actingAs(User::find($id))->post('/admin/profil-admin', [
+                'name' => 'Profil Saya', 'phone' => '+62 812-3456-7890', 'id' => $this->admin()->id,
+                'role' => 'owner', 'email' => 'other@example.test', 'active' => false,
+            ])->assertSessionHasNoErrors();
+            $fresh = User::find($id);
+            $this->assertSame('Profil Saya', $fresh->name);
+            $this->assertSame('+62 812-3456-7890', $fresh->phone);
+            $this->assertSame($role, $fresh->role);
+            $this->assertSame($role.'@example.test', $fresh->email);
+            $this->assertTrue($fresh->active);
+            $this->assertSame('Admin Sekolah', $this->admin()->name);
+            $this->get('/admin/pengaturan')->assertOk()->assertSee('Nomor HP pribadi');
+        }
+        $this->post('/admin/profil-admin', ['name' => 'Profil Saya', 'phone' => 'bukan-nomor'])->assertSessionHasErrors('phone');
+    }
 }

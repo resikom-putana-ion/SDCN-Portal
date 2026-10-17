@@ -21,6 +21,7 @@ class DocumentUserProvider implements UserProvider
             if (! $account || ($account['localId'] ?? '') !== $user->firebase_uid || ($account['disabled'] ?? false)
                 || mb_strtolower($account['email'] ?? '') !== mb_strtolower($user->email)) return null;
             $user->password = app(FirebaseAuth::class)->version($account);
+            $user->email_verified = ($account['emailVerified'] ?? false) === true;
         }
         return $user;
     }
@@ -41,6 +42,7 @@ class DocumentUserProvider implements UserProvider
             $fresh = $this->retrieveById($user->id);
             if (! $fresh) return false;
             $user->password = $fresh->password;
+            $user->email_verified = $fresh->email_verified;
             return true;
         }
         return isset($credentials['password']) && Hash::check($credentials['password'], $user->getAuthPassword());

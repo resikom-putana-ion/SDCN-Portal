@@ -1,14 +1,22 @@
-@php($settings=$content['settings']??[])
-<div class="public-nav"><a href="/website" class="brand"><strong>{{ $settings['school_name']??'SD Ceria Nusantara' }}</strong></a><a href="#about">Profil</a><a href="#program">Program</a><a href="#facilities">Fasilitas</a><a class="btn" href="/ppdb">Daftar Sekarang</a></div>
+<x-notice>Ini tinjauan isi draf sebelum diterbitkan. Susunan visual website dapat dilihat pada <a href="{{ config('school.landing_url') }}" target="_blank" rel="noopener">landing page yang sudah terbit ↗</a>.</x-notice>
 @foreach($content as $section=>$data)
-<section class="public-section" id="{{ $section }}">
-@if($section==='home')<div class="public-hero"><div><span class="eyebrow">{{ $data['eyebrow']??'' }}</span><h1>{{ $data['title']??'' }}</h1><p>{{ $data['description']??'' }}</p></div>@if(!empty($data['image']))<img src="{{ \App\Services\WebsiteContent::image($data['image']) }}" alt="{{ $data['title']??'' }}">@endif</div>
-@else<h2>{{ \App\Services\WebsiteContent::SECTIONS[$section]??$section }}</h2>@endif
-<div class="grid-3">@foreach(\Illuminate\Support\Arr::dot($data) as $key=>$value)
-@if(is_scalar($value) && $value!=='' && !str_ends_with($key,'.icon'))
-@if(preg_match('/(^image$|_image$|^logo$|\.photo$)/',$key))<img src="{{ \App\Services\WebsiteContent::image((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" style="max-width:100%;max-height:220px;object-fit:cover">
-@elseif(!($section==='home' && in_array($key,['eyebrow','title','description'])))<div><h3>{{ \App\Services\ContentLabels::label($key) }}</h3><p style="white-space:pre-line">{{ $value }}</p></div>@endif
+<x-card :title="\App\Services\WebsiteContent::SECTIONS[$section] ?? $section">
+<div class="actions"><a href="/admin/website/{{ $section }}/edit">Edit bagian ini</a></div>
+@if($section === 'teachers')
+    <h3>Ringkasan guru di beranda</h3>
+    <div class="grid-3">@foreach($data['team'] ?? [] as $person) @include('website.person', ['person'=>$person]) @endforeach</div>
+    <h3 style="margin-top:24px">{{ $data['directory_title'] }}</h3><p>{{ $data['directory_description'] }}</p>
+    @if($data['demo_profiles'])<p class="muted">Profil masih ditandai sebagai contoh.</p>@endif
+    <div class="grid-3">@foreach($data['people'] as $person) @include('website.person', ['person'=>$person]) @endforeach</div>
+    <h3 style="margin-top:24px">Mata pelajaran</h3>
+    <div class="grid-3">@foreach($data['subjects'] as $subject)<article><h4>{{ $subject['title'] }}</h4><p>{{ $subject['by'] }}</p><p>{{ $subject['text'] }}</p></article>@endforeach</div>
+    <h3 style="margin-top:24px">Struktur organisasi</h3>
+    <p>Kepala sekolah: {{ $data['people'][$data['structure']['head']]['name'] ?? 'Anggota tidak tersedia' }}</p>
+    <div class="grid-3">@foreach($data['structure']['branches'] as $branch)<article><h4>{{ $branch['title'] }}</h4><p>{{ $branch['summary'] }}</p><p>Koordinator: {{ $data['people'][$branch['lead']]['name'] ?? 'Anggota tidak tersedia' }}</p>
+    @foreach($branch['teams'] as $team)<strong>{{ $team['title'] }}</strong><ul>@foreach($team['members'] as $index)<li>{{ $data['people'][$index]['name'] ?? 'Anggota tidak tersedia' }}</li>@endforeach</ul>@endforeach</article>@endforeach</div>
+    @include('website.review-values', ['items'=>['values'=>$data['values'] ?? []], 'prefix'=>''])
+@else
+    @include('website.review-values', ['items'=>$data, 'prefix'=>''])
 @endif
-@endforeach</div></section>
+</x-card>
 @endforeach
-<footer class="public-footer"><strong>{{ $settings['school_name']??'' }}</strong><p>{{ $settings['email']??'' }} ? {{ $settings['whatsapp']??'' }}</p><p>{{ $settings['address']??'' }}</p></footer>

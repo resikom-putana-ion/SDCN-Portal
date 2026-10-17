@@ -19,6 +19,7 @@ class FirebaseAuthenticationTest extends CloudTestCase
     private bool $unavailable = false;
     private bool $failImport = false;
     private array $resetEmails = [];
+    private array $verificationTokens = [];
 
     protected function setUp(): void
     {
@@ -45,6 +46,11 @@ class FirebaseAuthenticationTest extends CloudTestCase
                 return Http::response(['error' => ['message' => 'INVALID_LOGIN_CREDENTIALS']], 400);
             }
             if ($operation === 'sendOobCode') {
+                if ($body['requestType'] === 'VERIFY_EMAIL') {
+                    $this->verificationTokens[] = $body['idToken'];
+                    $this->assertArrayNotHasKey('email', $body);
+                    return Http::response([]);
+                }
                 $this->resetEmails[] = $body['email'];
                 $this->assertSame('PASSWORD_RESET', $body['requestType']);
                 $this->assertSame('id', $request->header('X-Firebase-Locale')[0]);
@@ -67,7 +73,8 @@ class FirebaseAuthenticationTest extends CloudTestCase
                 return Http::response([]);
             }
             if ($operation === 'update') {
-                $this->accounts[$body['localId']]['disabled'] = $body['disableUser'];
+                if (isset($body['disableUser'])) $this->accounts[$body['localId']]['disabled'] = $body['disableUser'];
+                if (isset($body['displayName'])) $this->accounts[$body['localId']]['displayName'] = $body['displayName'];
                 return Http::response(['localId' => $body['localId']]);
             }
             if ($operation === 'delete') {
@@ -84,7 +91,7 @@ class FirebaseAuthenticationTest extends CloudTestCase
         $id = hash('sha256', $email);
         $uid = 'firebase-'.$role;
         $this->store->put('admins', $id, ['email' => $email, 'name' => $role, 'role' => $role, 'active' => $active, 'firebase_uid' => $uid, 'password' => '', 'remember_token' => '']);
-        $this->accounts[$uid] = ['localId' => $uid, 'email' => $email, 'disabled' => ! $active, 'validSince' => '1', 'passwordUpdatedAt' => 1000, 'testHash' => Hash::make('Ceria2026!')];
+        $this->accounts[$uid] = ['localId' => $uid, 'email' => $email, 'emailVerified' => true, 'disabled' => ! $active, 'validSince' => '1', 'passwordUpdatedAt' => 1000, 'testHash' => Hash::make('Ceria2026!')];
         return User::find($id);
     }
 
@@ -104,7 +111,7 @@ class FirebaseAuthenticationTest extends CloudTestCase
             $this->app['auth']->forgetGuards();
             $this->get('/admin')->assertOk();
             $response = $this->get('/admin/pengguna/baru');
-            $role === 'owner' ? $response->assertOk() : $response->assertForbidden();
+            in_array($role, ['owner', 'admin']) ? $response->assertOk() : $response->assertForbidden();
             if ($role === 'akademik') $this->get('/admin/keuangan')->assertForbidden();
             if ($role === 'keuangan') $this->get('/admin/nilai')->assertForbidden();
             $this->post('/logout');
@@ -204,7 +211,10 @@ class FirebaseAuthenticationTest extends CloudTestCase
         $this->assertNotEmpty($row['firebase_uid']);
         $this->assertSame('new@example.test', $this->accounts[$row['firebase_uid']]['email']);
         $this->post('/logout');
-        $this->post('/login', ['email' => 'new@example.test', 'password' => 'NewPassword!'])->assertRedirect('/admin');
+        $this->post('/login', ['email' => 'new@example.test', 'password' => 'NewPassword!'])->assertRedirect('/verify-email');
+        $this->get('/admin/pengguna/baru')->assertRedirect('/verify-email');
+        $this->accounts[$row['firebase_uid']]['emailVerified'] = true;
+        $this->app['auth']->forgetGuards();
         $this->get('/admin/pengguna/baru')->assertForbidden();
     }
 
@@ -231,7 +241,7 @@ class FirebaseAuthenticationTest extends CloudTestCase
         $this->assertTrue(Hash::check('Ceria2026!', $this->accounts[$fresh['firebase_uid']]['testHash']));
         $migration->migrate($fresh);
         $this->assertCount(1, $this->accounts);
-        $this->post('/login', ['email' => $row['email'], 'password' => 'Ceria2026!'])->assertRedirect('/admin');
+        $this->post('/login', ['email' => $row['email'], 'password' => 'Ceria2026!'])->assertRedirect('/verify-email');
     }
 
     public function test_migration_conflict_or_partial_import_failure_keeps_local_credentials(): void
@@ -245,5 +255,53 @@ class FirebaseAuthenticationTest extends CloudTestCase
         try { app(FirebaseAccountMigration::class)->migrate($row); $this->fail('Expected conflict'); }
         catch (FirebaseAuthException $e) { $this->assertSame('ACCOUNT_CONFLICT', $e->reason); }
         $this->assertSame($row, $this->store->get('admins', $row['id']));
+    }
+
+    public function test_unverified_users_must_verify_before_any_dashboard_access_and_can_resend(): void
+    {
+        $user = $this->account();
+        $this->accounts[$user->firebase_uid]['emailVerified'] = false;
+        $this->post('/login', ['email' => $user->email, 'password' => 'Ceria2026!', 'remember' => true])->assertRedirect('/verify-email');
+        $this->app['auth']->forgetGuards();
+        $this->get('/admin')->assertRedirect('/verify-email');
+        $this->post('/admin/pengguna', [])->assertRedirect('/verify-email');
+        $this->post('/admin/profil-admin', ['name' => 'Unverified'])->assertRedirect('/verify-email');
+        $this->get('/verify-email')->assertOk()->assertSee($user->email);
+        $this->from('/verify-email')->post('/verify-email', ['password' => 'Ceria2026!', 'email' => 'victim@example.test'])->assertSessionHas('success');
+        $this->assertSame(['secret-id-token'], $this->verificationTokens);
+        $this->assertStringNotContainsString('secret-id-token', json_encode(session()->all()));
+        $this->assertStringNotContainsString('Ceria2026!', json_encode(session()->all()));
+        $this->post('/verify-email', ['password' => 'Ceria2026!'])->assertSessionHasErrors('email');
+        $this->assertCount(1, $this->verificationTokens);
+        $this->get('/verify-email?emailVerified=true')->assertOk();
+        $this->accounts[$user->firebase_uid]['emailVerified'] = true;
+        $this->app['auth']->forgetGuards();
+        $this->get('/verify-email')->assertRedirect('/admin');
+        $this->get('/admin')->assertOk();
+    }
+
+    public function test_verification_requires_session_and_correct_password_and_never_claims_success_on_failure(): void
+    {
+        $this->get('/verify-email')->assertRedirect('/login');
+        $this->post('/verify-email', ['password' => 'anything'])->assertRedirect('/login');
+        $user = $this->account();
+        $this->accounts[$user->firebase_uid]['emailVerified'] = false;
+        $this->post('/login', ['email' => $user->email, 'password' => 'Ceria2026!'])->assertRedirect('/verify-email');
+        $this->post('/verify-email', ['password' => 'wrong'])->assertSessionHasErrors('password')->assertSessionMissing('success');
+        $this->assertSame([], $this->verificationTokens);
+        $this->travel(61)->seconds();
+        $this->unavailable = true;
+        $this->post('/verify-email', ['password' => 'Ceria2026!'])->assertSessionHasErrors('email')->assertSessionMissing('success');
+        $this->assertSame([], $this->verificationTokens);
+    }
+
+    public function test_profile_syncs_own_name_without_promoting_contact_phone_to_verified_credential(): void
+    {
+        $user = $this->account('akademik');
+        $this->login($user);
+        $this->post('/admin/profil-admin', ['name' => 'Nama Saya', 'phone' => '081234567890'])->assertSessionHasNoErrors();
+        $this->assertSame('Nama Saya', $this->accounts[$user->firebase_uid]['displayName']);
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'accounts:update') && $r['localId'] === $user->firebase_uid
+            && $r['displayName'] === 'Nama Saya' && ! isset($r['phoneNumber']) && ! isset($r['emailVerified']));
     }
 }

@@ -32,6 +32,7 @@ class WebsiteContent
         if ($draft) foreach (CloudData::collection('dashboard_content_drafts') as $row) {
             if (isset($all[$row['id']])) $all[$row['id']] = $this->mergeDraft($all[$row['id']], $row, false);
         }
+        if (isset($all['teachers'])) $all['teachers'] = TeacherDirectory::withDefaults($all['teachers']);
         return $all;
     }
     public function editor(string $section): array
@@ -40,7 +41,9 @@ class WebsiteContent
         abort_unless($published, 404, 'Bagian website belum tersedia di Firestore.');
         $published = $this->clean($published);
         $draft = CloudData::store()->get('dashboard_content_drafts', $section);
-        return ['published' => $published, 'data' => $draft ? $this->mergeDraft($published, $draft, false) : $published,
+        $data = $draft ? $this->mergeDraft($published, $draft, false) : $published;
+        if ($section === 'teachers') $data = TeacherDirectory::withDefaults($data);
+        return ['published' => $published, 'data' => $data,
             'version' => self::fingerprint([$published, $draft]), 'draft' => $draft];
     }
     public function save(string $section, array $data, string $version): void
@@ -57,16 +60,34 @@ class WebsiteContent
     }
     public function mergeDraft(array $published, array $draft, bool $checkConflict): array
     {
-        $base = Arr::dot($draft['base']);
-        foreach (Arr::dot($draft['data']) as $key => $value) {
-            if (array_key_exists($key, $base) && $value === $base[$key]) continue;
-            $current = Arr::get($published, $key);
-            if ($checkConflict && $current !== ($base[$key] ?? null) && $current !== $value) {
-                throw ValidationException::withMessages(['content' => 'Bagian '.ContentLabels::label($key).' berubah di landing page. Buka editor, periksa isi terbaru, lalu simpan kembali.']);
+        return $this->mergeMap($published, $draft['base'], $draft['data'], $checkConflict);
+    }
+
+    private function mergeMap(array $current, array $base, array $draft, bool $check, string $prefix = ''): array
+    {
+        $same = static fn ($a, $b) => is_array($a) && is_array($b) ? self::fingerprint($a) === self::fingerprint($b) : $a === $b;
+        foreach (array_unique([...array_keys($base), ...array_keys($draft)]) as $key) {
+            $beforeExists = array_key_exists($key, $base);
+            $afterExists = array_key_exists($key, $draft);
+            $exists = array_key_exists($key, $current);
+            $before = $base[$key] ?? null;
+            $after = $draft[$key] ?? null;
+            $live = $current[$key] ?? null;
+            if ($beforeExists === $afterExists && $same($before, $after)) continue;
+            $path = $prefix.$key;
+            if ($beforeExists && $afterExists && $exists && is_array($before) && is_array($after) && is_array($live)
+                && !array_is_list($before) && !array_is_list($after) && !array_is_list($live)) {
+                $current[$key] = $this->mergeMap($live, $before, $after, $check, $path.'.');
+                continue;
             }
-            Arr::set($published, $key, $value);
+            // Indexed lists are replaced as a unit: never combine different people by position.
+            if ($check && !($exists === $beforeExists && $same($live, $before)) && !($exists === $afterExists && $same($live, $after))) {
+                throw ValidationException::withMessages(['content' => 'Bagian '.ContentLabels::label($path).' berubah di landing page. Buka editor, periksa isi terbaru, lalu simpan kembali.']);
+            }
+            if ($afterExists) $current[$key] = $after;
+            else unset($current[$key]);
         }
-        return $published;
+        return $current;
     }
     public function publish(): int
     {
@@ -75,7 +96,9 @@ class WebsiteContent
             foreach ($drafts as $draft) {
                 $published = CloudData::store()->get('content', $draft['id']);
                 if (!$published) throw ValidationException::withMessages(['content' => 'Bagian website sudah dihapus. Muat ulang editor.']);
-                CloudData::store()->put('content', $draft['id'], $this->mergeDraft($this->clean($published), $draft, true));
+                $merged = $this->mergeDraft($this->clean($published), $draft, true);
+                if ($draft['id'] === 'teachers') TeacherDirectory::validate(TeacherDirectory::withDefaults($merged));
+                CloudData::store()->put('content', $draft['id'], $merged);
                 CloudData::store()->delete('dashboard_content_drafts', $draft['id']);
             }
             // Invalidate the existing landing-page cache in the same commit.
@@ -86,6 +109,12 @@ class WebsiteContent
     }
     public static function image(string $path): string
     {
-        return preg_match('#^/(?:assets/design|media)/[a-zA-Z0-9_.-]+\.(png|jpe?g|webp)$#', $path) ? $path : '';
+        return preg_match('#^/(?:assets/(?:design|team)|media)/[a-zA-Z0-9_-]+\.(png|jpe?g|webp)$#', $path) ? $path : '';
+    }
+
+    public static function imageUrl(string $path): string
+    {
+        $safe = self::image($path);
+        return $safe === '' ? '' : (str_starts_with($safe, '/assets/') ? rtrim(config('school.landing_url'), '/').$safe : $safe);
     }
 }

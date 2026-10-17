@@ -7,7 +7,6 @@ use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\StudentLifecycleController;
 use App\Http\Middleware\SchoolAdmin;
-use App\Http\Middleware\SchoolOwner;
 use App\Http\Middleware\SchoolRoleAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +17,10 @@ Route::get('/', fn () => redirect('/admin'));
 Route::get('/login', fn () => view('auth.login'))->middleware('guest')->name('login');
 Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:6,1']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
+Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAdmin::class])->group(function () {
+    Route::get('/verify-email', [\App\Http\Controllers\EmailVerificationController::class, 'show'])->name('verification.notice');
+    Route::post('/verify-email', [\App\Http\Controllers\EmailVerificationController::class, 'send'])->middleware('throttle:3,1');
+});
 Route::get('/forgot-password', fn () => view('auth.recovery', ['mode' => 'forgot']))->name('password.request');
 Route::post('/forgot-password', [AuthController::class, 'forgot'])->middleware('throttle:3,1')->name('password.email');
 Route::get('/reset-password/{token}', fn ($token) => config('school.firebase_auth_enabled')
@@ -35,15 +38,16 @@ Route::get('/ppdb', [WebsiteController::class, 'application']);
 Route::post('/ppdb', [WebsiteController::class, 'submitApplication'])->middleware('throttle:5,1');
 Route::get('/ppdb/berhasil', fn () => session()->has('registration') ? view('public.success') : redirect('/ppdb'));
 
-Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAdmin::class, SchoolRoleAccess::class])->prefix('admin')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAdmin::class, \App\Http\Middleware\VerifiedSchoolEmail::class, SchoolRoleAccess::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/pengguna', [UserManagementController::class, 'index']);
-    Route::middleware(SchoolOwner::class)->group(function () {
+    Route::post('/pengguna/hapus/konfirmasi', [UserManagementController::class, 'confirmDelete']);
+    Route::get('/pengguna/{account}/hapus', [UserManagementController::class, 'confirmDelete']);
+    Route::delete('/pengguna/hapus', [UserManagementController::class, 'destroy']);
         Route::get('/pengguna/baru', [UserManagementController::class, 'create']);
         Route::post('/pengguna', [UserManagementController::class, 'store']);
         Route::get('/pengguna/{account}/edit', [UserManagementController::class, 'edit']);
         Route::put('/pengguna/{account}', [UserManagementController::class, 'update']);
-    });
     Route::post('/profil-admin', [\App\Http\Controllers\AdminProfileController::class, 'save']);
     Route::get('/foto-admin', [\App\Http\Controllers\AdminProfileController::class, 'photo']);
     Route::get('/export/{kind}', [AdminController::class, 'export']);

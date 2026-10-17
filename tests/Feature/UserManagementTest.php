@@ -54,7 +54,7 @@ class UserManagementTest extends CloudTestCase
         $this->post('/login', ['email' => 'NEW@example.test', 'password' => 'Baru2026!'])->assertRedirect('/admin');
         $this->assertAuthenticatedAs($user);
         $this->get('/admin')->assertOk();
-        $this->get('/admin/pengguna')->assertOk()->assertDontSee('Tambah akun')->assertDontSee('Kelola akun Admin Baru');
+        $this->get('/admin/pengguna')->assertOk()->assertSee('Tambah akun')->assertSee('Kelola akun new');
     }
 
     public function test_owner_can_create_another_owner_with_full_management_access(): void
@@ -68,7 +68,7 @@ class UserManagementTest extends CloudTestCase
         $this->assertNotNull(User::find(hash('sha256', 'third@example.test')));
     }
 
-    public function test_guests_admins_and_other_roles_cannot_manage_users(): void
+    public function test_guests_and_other_roles_cannot_manage_users(): void
     {
         $url = '/admin/pengguna/'.$this->admin()->id;
         $this->get('/admin/pengguna/baru')->assertRedirect('/login');
@@ -76,14 +76,15 @@ class UserManagementTest extends CloudTestCase
         $this->post('/admin/pengguna', $this->payload())->assertRedirect('/login');
         $this->put($url, $this->payload())->assertRedirect('/login');
         $before = $this->store->all('admins');
-        foreach ([$this->admin(), new User(['id' => 'parent', 'name' => 'Wali', 'role' => 'parent', 'active' => true])] as $user) {
+        foreach (['parent', 'keuangan', 'akademik'] as $role) {
+            $user = new User(['id' => $role, 'name' => $role, 'role' => $role, 'active' => true]);
             $this->actingAs($user)->get('/admin/pengguna/baru')->assertForbidden();
             $this->get($url.'/edit')->assertForbidden();
             $this->post('/admin/pengguna', $this->payload(['role' => 'owner']))->assertForbidden();
             $this->put($url, $this->payload(['role' => 'owner']))->assertForbidden();
         }
         $this->assertSame($before, $this->store->all('admins'));
-        $this->actingAs($this->admin())->get('/admin/pengguna')->assertOk()->assertDontSee('Tambah akun');
+        $this->actingAs($this->admin())->get('/admin/pengguna')->assertOk()->assertSee('Tambah akun');
     }
 
     public function test_invalid_or_duplicate_accounts_are_rejected_without_overwriting_users(): void
@@ -93,7 +94,7 @@ class UserManagementTest extends CloudTestCase
         $this->from('/admin/pengguna/baru')->post('/admin/pengguna', $this->payload([
             'name' => '   ', 'email' => 'invalid', 'role' => 'teacher', 'active' => 'yes',
             'password' => 'short', 'password_confirmation' => 'different',
-        ]))->assertSessionHasErrors(['name', 'email', 'role', 'active', 'password']);
+        ]))->assertSessionHasErrors(['email', 'role', 'active', 'password']);
         $this->assertNull(session()->getOldInput('password'));
         $this->assertNull(session()->getOldInput('password_confirmation'));
         $this->post('/admin/pengguna', $this->payload(['role' => 'superadmin']))->assertSessionHasErrors('role');
@@ -114,7 +115,7 @@ class UserManagementTest extends CloudTestCase
         $fresh = User::find($admin->id);
         $this->assertTrue($fresh->isOwner());
         $this->assertFalse($fresh->active);
-        $this->assertSame('Pengelola Baru', $fresh->name);
+        $this->assertSame($admin->name, $fresh->name);
         $this->assertSame($admin->email, $fresh->email);
         $this->assertSame($admin->password, $fresh->password);
         $this->assertSame('photos/existing.jpg', $fresh->photo_path);
@@ -149,7 +150,7 @@ class UserManagementTest extends CloudTestCase
         $owner = $this->owner();
         $this->actingAs($owner)->post('/admin/pengguna', $this->payload(['role' => 'owner']))->assertSessionHasNoErrors();
         $id = hash('sha256', 'new@example.test');
-        $this->put('/admin/pengguna/'.$id, $this->payload(['role' => 'admin']))->assertSessionHasNoErrors();
+        $this->put('/admin/pengguna/'.$id, $this->payload(['role' => 'akademik']))->assertSessionHasNoErrors();
         $sessionKey = $this->app['auth']->guard()->getName();
         $this->withSession([$sessionKey => $id]);
         $this->app['auth']->forgetGuards();
@@ -176,7 +177,7 @@ class UserManagementTest extends CloudTestCase
         $this->put('/admin/pengguna/'.hash('sha256', 'new@example.test'), $this->payload(['role' => 'owner']))->assertSessionHasNoErrors();
         $this->put($url, $this->payload())->assertSessionHasNoErrors();
         $this->assertFalse(User::find($owner->id)->isOwner());
-        $this->actingAs(User::find($owner->id))->get('/admin/pengguna/baru')->assertForbidden();
+        $this->actingAs(User::find($owner->id))->get('/admin/pengguna/baru')->assertOk();
     }
 
     public function test_owner_can_deactivate_own_account_when_another_owner_exists_and_is_logged_out(): void
@@ -192,7 +193,7 @@ class UserManagementTest extends CloudTestCase
     {
         $owner = $this->owner();
         $this->actingAs($owner);
-        $this->store->put('admins', $owner->id, array_replace($this->store->get('admins', $owner->id), ['role' => 'admin']));
+        $this->store->put('admins', $owner->id, array_replace($this->store->get('admins', $owner->id), ['role' => 'akademik']));
         $before = $this->store->all('admins');
         $this->post('/admin/pengguna', $this->payload())->assertForbidden();
         $this->put('/admin/pengguna/'.$this->admin()->id, $this->payload(['role' => 'owner']))->assertForbidden();
@@ -205,5 +206,33 @@ class UserManagementTest extends CloudTestCase
         $this->put('/admin/pengguna/missing', $this->payload())->assertNotFound();
         $this->put('/admin/pengguna/'.$this->admin()->id, $this->payload(['role' => 'teacher']))->assertSessionHasErrors('role');
         $this->assertSame('admin', $this->admin()->role);
+    }
+
+    public function test_admin_can_create_all_roles_and_manage_access_but_not_personal_identity(): void
+    {
+        $owner = $this->owner();
+        $this->actingAs($this->admin())->get('/admin/pengguna/baru')->assertOk()->assertDontSee('name="name"', false);
+        foreach (array_keys(User::ROLES) as $role) {
+            $this->post('/admin/pengguna', $this->payload(['email' => $role.'-new@example.test', 'role' => $role, 'phone' => '081234567890']))->assertSessionHasNoErrors();
+            $new = User::find(hash('sha256', $role.'-new@example.test'));
+            $this->assertSame($role, $new->role);
+            $this->assertSame($role.'-new', $new->name);
+            $this->assertNull($new->phone ?? null);
+        }
+        $this->get('/admin/pengguna/'.$owner->id.'/edit')->assertOk()->assertDontSee('name="name"', false);
+        $this->put('/admin/pengguna/'.$owner->id, $this->payload(['role' => 'keuangan', 'phone' => '081234567890', 'photo_path' => 'other.jpg']))->assertSessionHasNoErrors();
+        $fresh = User::find($owner->id);
+        $this->assertSame('keuangan', $fresh->role);
+        $this->assertSame($owner->name, $fresh->name);
+        $this->assertSame($owner->email, $fresh->email);
+        $this->assertNull($fresh->phone ?? null);
+        $this->assertNull($fresh->photo_path);
+    }
+
+    public function test_admin_cannot_demote_or_disable_last_owner(): void
+    {
+        $owner = $this->owner();
+        $this->actingAs($this->admin())->put('/admin/pengguna/'.$owner->id, ['role' => 'admin', 'active' => '1'])->assertSessionHasErrors('role');
+        $this->put('/admin/pengguna/'.$owner->id, ['role' => 'owner', 'active' => '0'])->assertSessionHasErrors('role');
     }
 }

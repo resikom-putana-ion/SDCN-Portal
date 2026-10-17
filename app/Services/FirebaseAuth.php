@@ -47,6 +47,23 @@ class FirebaseAuth
         $this->request('POST', 'v1/accounts:sendOobCode', ['requestType' => 'PASSWORD_RESET', 'email' => $email]);
     }
 
+    public function sendVerification(string $uid, string $email, #[\SensitiveParameter] string $password): bool
+    {
+        try {
+            $result = $this->request('POST', 'v1/accounts:signInWithPassword', [
+                'email' => $email, 'password' => $password, 'returnSecureToken' => true,
+            ]);
+        } catch (FirebaseAuthException $e) {
+            if (in_array($e->reason, ['INVALID_LOGIN_CREDENTIALS', 'INVALID_PASSWORD', 'EMAIL_NOT_FOUND', 'USER_DISABLED'], true)) return false;
+            throw $e;
+        }
+        if (($result['localId'] ?? '') !== $uid || mb_strtolower($result['email'] ?? '') !== mb_strtolower($email)
+            || empty($result['idToken'])) return false;
+        // Use the token only for this request; never store it in the Laravel session.
+        $this->request('POST', 'v1/accounts:sendOobCode', ['requestType' => 'VERIFY_EMAIL', 'idToken' => $result['idToken']]);
+        return true;
+    }
+
     public function create(string $uid, string $email, string $name, #[\SensitiveParameter] string $password, bool $active): void
     {
         $this->request('POST', 'v1/accounts:signUp', [
