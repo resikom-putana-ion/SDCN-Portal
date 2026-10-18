@@ -161,6 +161,7 @@ class WebsiteController extends Controller
 
     public function submitApplication(Request $request, \App\Services\FirestoreFileStorage $files)
     {
+        $request->validate(['payment_method' => 'required|in:offline,transfer', 'payment_proof' => 'required_if:payment_method,transfer|prohibited_if:payment_method,offline|file|mimes:pdf,jpg,jpeg,png|max:5120']);
         $data = $request->validate(['name' => 'required|string|max:150', 'birth_date' => 'required|date|before:today', 'guardian' => 'required|string|max:150', 'relationship' => 'required|in:Ibu,Ayah,Wali', 'phone' => 'required|string|max:30', 'email' => 'required|email|max:190', 'gender' => 'required|in:Perempuan,Laki-laki', 'consent' => 'accepted', 'birth_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:1024', 'family_card' => 'required|file|mimes:pdf,jpg,jpeg,png|max:1024', 'photo' => 'required|file|mimes:jpg,jpeg,png|max:1024']);
         $number = DB::transaction(function () use ($request, $data, $files) {
             $period = School::period();
@@ -173,8 +174,14 @@ class WebsiteController extends Controller
                 $files->putUploadedFile($path, $file);
                 $documents[$key] = ['name' => $label.'.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize()];
             }
+            if ($request->file('payment_proof')) {
+                $file = $request->file('payment_proof');
+                $path = 'applications/'.$number.'/'.Str::uuid().'.'.$file->extension();
+                $files->putUploadedFile($path, $file);
+                $documents['payment_proof'] = ['name' => 'Bukti transfer.'.$file->extension(), 'path' => $path, 'mime' => $file->getMimeType(), 'size' => $file->getSize()];
+            }
             $application = DB::store()->get('applications', $number);
-            DB::store()->put('applications', $number, [...$application, 'documents' => $documents, 'consent_at' => now()->toIso8601String()]);
+            DB::store()->put('applications', $number, [...$application, 'payment_method' => $request->input('payment_method'), 'documents' => $documents, 'consent_at' => now()->toIso8601String()]);
             School::log('Pendaftaran baru '.$number, 'PPDB', 'Pemeriksaan');
             return $number;
         });

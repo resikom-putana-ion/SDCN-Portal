@@ -41,6 +41,7 @@ class SchoolWorkflowTest extends CloudTestCase
     {
         $this->actingAs($this->admin());
         $applicant = SchoolRecord::where('code', 'PPDB-2027-013')->firstOrFail();
+        $applicant->update(['data' => [...$applicant->data, 'payment_method' => 'offline']]);
         $payload = ['checks' => ['family'], 'amount' => 250000, 'method' => 'Tunai di sekolah', 'class' => '1A', 'action' => 'activate'];
         $this->post('/admin/ppdb/'.$applicant->id.'/offline', $payload)->assertSessionHasErrors('checks');
         $this->assertCloudCount('admission_activations', 0);
@@ -101,7 +102,7 @@ class SchoolWorkflowTest extends CloudTestCase
     {
         
         $before = SchoolRecord::ofKind('students')->count();
-        $payload = ['name' => 'Siswa Uji', 'birth_date' => '2020-03-12', 'guardian' => 'Wali Uji', 'relationship' => 'Ibu', 'phone' => '08123456789', 'email' => 'wali@example.com', 'gender' => 'Perempuan', 'consent' => 1, 'birth_certificate' => UploadedFile::fake()->createWithContent('birth.pdf', '%PDF-1.4 test birth'), 'family_card' => UploadedFile::fake()->createWithContent('family.pdf', '%PDF-1.4 test family'), 'photo' => UploadedFile::fake()->createWithContent('photo.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='))];
+        $payload = ['payment_method' => 'offline', 'name' => 'Siswa Uji', 'birth_date' => '2020-03-12', 'guardian' => 'Wali Uji', 'relationship' => 'Ibu', 'phone' => '08123456789', 'email' => 'wali@example.com', 'gender' => 'Perempuan', 'consent' => 1, 'birth_certificate' => UploadedFile::fake()->createWithContent('birth.pdf', '%PDF-1.4 test birth'), 'family_card' => UploadedFile::fake()->createWithContent('family.pdf', '%PDF-1.4 test family'), 'photo' => UploadedFile::fake()->createWithContent('photo.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='))];
         $this->post('/ppdb', $payload)->assertSessionHasNoErrors()->assertRedirect('/ppdb/berhasil');
         $this->assertSame($before, SchoolRecord::ofKind('students')->count());
         $record = SchoolRecord::ofKind('applicants')->get()->first(fn ($row) => $row->value('name') === 'Siswa Uji');

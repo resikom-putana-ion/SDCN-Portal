@@ -228,6 +228,7 @@
         "number": "Nomor daftar",
         "date": "Tanggal",
         "guardian": "Wali",
+        "payment_method_label": "Metode pembayaran",
         "status": "Status"
       },
       ""
@@ -240,6 +241,7 @@
         "name": "Calon siswa",
         "number": "Nomor daftar",
         "appointment": "Jadwal datang",
+        "payment_method_label": "Metode pembayaran",
         "payment": "Pembayaran",
         "status": "Status"
       },

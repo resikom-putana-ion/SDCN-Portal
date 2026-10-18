@@ -15,21 +15,22 @@ class WorkflowController extends Controller
     public function review(Request $request, SchoolRecord $record)
     {
         abort_unless($record->kind === 'applicants', 404);
-        $data = $request->validate(['decision' => 'required|in:approve,correction', 'notes' => 'required|string|max:3000']);
+        $data = $request->validate(['decision' => 'required|in:approve,correction,reject', 'notes' => 'required|string|max:3000']);
         DB::transaction(function () use ($record, $data) {
             $record = SchoolRecord::lockForUpdate()->findOrFail($record->id);
             abort_if($record->value('status') === 'Aktif', 409, 'Siswa sudah aktif.');
-            $record->update(['data' => [...$record->data, 'status' => $data['decision'] === 'approve' ? 'Lolos administrasi' : 'Perlu perbaikan', 'notes' => $data['notes']]]);
+            $record->update(['data' => [...$record->data, 'status' => match ($data['decision']) { 'approve' => 'Lolos administrasi', 'reject' => 'Ditolak', default => 'Perlu perbaikan' }, 'notes' => $data['notes']]]);
             School::log('Memeriksa '.$record->code, 'Penerimaan siswa', $record->value('status'));
         });
 
-        return redirect('/admin/'.($data['decision'] === 'approve' ? 'daftar-ulang' : 'pendaftar').'/'.$record->id)->with('success', 'Hasil pemeriksaan disimpan.');
+        $mailResult = app(\App\Services\AdmissionResultMail::class)->send($record);
+        return redirect('/admin/'.($data['decision'] === 'approve' ? 'daftar-ulang' : 'pendaftar').'/'.$record->id)->with('success', 'Hasil pemeriksaan disimpan.'.$mailResult);
     }
 
     public function offline(Request $request, SchoolRecord $record)
     {
         abort_unless($record->kind === 'applicants', 404);
-        $data = $request->validate(['checks' => 'nullable|array', 'checks.*' => 'in:family,birth,family_card,photo', 'paid' => 'nullable|boolean', 'amount' => 'required|integer|min:0', 'method' => 'required|in:Tunai di sekolah,Transfer di sekolah', 'class' => 'required|in:1A,1B', 'notes' => 'nullable|string|max:3000', 'action' => 'required|in:save,activate']);
+        $data = $request->validate(['checks' => 'nullable|array', 'checks.*' => 'in:family,birth,family_card,photo', 'paid' => 'nullable|boolean', 'amount' => 'required|integer|min:0', 'class' => 'required|in:1A,1B', 'notes' => 'nullable|string|max:3000', 'action' => 'required|in:save,activate']);
         $studentId = DB::transaction(function () use ($record, $data) {
             $record = SchoolRecord::lockForUpdate()->findOrFail($record->id);
             $existing = DB::table('admission_activations')->where('applicant_id', $record->id)->first();
@@ -39,6 +40,11 @@ class WorkflowController extends Controller
             if (! in_array($record->value('status'), ['Lolos administrasi', 'Menunggu daftar ulang', 'Siap diaktifkan'])) {
                 throw ValidationException::withMessages(['status' => 'Pendaftar harus lolos administrasi terlebih dahulu.']);
             }
+            $method = $record->value('payment_method');
+            if (! $method && (! empty($data['paid']) || $data['action'] === 'activate')) {
+                throw ValidationException::withMessages(['payment_method' => 'Metode pembayaran belum tersedia dari pendaftaran. Lengkapi data sumber terlebih dahulu.']);
+            }
+            $data['method'] = $method === 'transfer' ? 'Transfer rekening' : ($method === 'offline' ? 'Tunai di sekolah' : '');
             $complete = count(array_unique($data['checks'] ?? [])) === 4 && ! empty($data['paid']) && (int) $data['amount'] === (int) School::period()['fee'];
             if ($data['action'] === 'activate' && ! $complete) {
                 throw ValidationException::withMessages(['checks' => 'Lengkapi pemeriksaan dokumen asli dan pembayaran sebelum aktivasi siswa.']);

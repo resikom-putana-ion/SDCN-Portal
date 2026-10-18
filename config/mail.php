@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'admissions' => [
+        'enabled' => env('ADMISSION_MAIL_ENABLED', false),
+        'from' => env('ADMISSION_MAIL_FROM_ADDRESS'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

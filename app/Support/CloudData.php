@@ -44,7 +44,7 @@ class CloudData
         if ($name === 'school_documents') foreach (self::collection('applications') as $application) {
             foreach ($application['documents'] ?? [] as $field => $file) $rows->push((object) [
                 'id' => 'application-file-'.hash('sha256', $application['id'].'/'.$field),
-                'record_id' => $application['id'], 'path' => $file['path'], 'name' => $file['name'] ?? $field,
+                'record_id' => $application['id'], 'field' => $field, 'path' => $file['path'], 'name' => $file['name'] ?? $field,
                 'mime' => $file['mime'] ?? 'application/octet-stream', 'size' => $file['size'] ?? 0,
                 'created_at' => $application['created_at'] ?? null,
             ]);
@@ -53,7 +53,7 @@ class CloudData
     }
     public static function applicant(array $row): SchoolRecord
     {
-        $status = match ($row['status'] ?? 'baru') { 'diterima' => 'Lolos administrasi', 'ditolak' => 'Perlu perbaikan', default => 'Pemeriksaan' };
+        $status = match ($row['status'] ?? 'baru') { 'diterima' => 'Lolos administrasi', 'ditolak' => 'Ditolak', 'perlu_perbaikan' => 'Perlu perbaikan', default => 'Pemeriksaan' };
         $extra = $row['dashboard'] ?? [];
         if (($extra['source_status'] ?? null) !== ($row['status'] ?? 'baru')) unset($extra['status']);
         return new SchoolRecord([
@@ -69,6 +69,8 @@ class CloudData
                 'year' => $extra['year'] ?? $row['year'] ?? '',
                 'date' => substr($row['created_at'] ?? '', 0, 10), 'payment' => $extra['payment'] ?? 'Belum dicatat',
                 'checks' => $extra['checks'] ?? [],
+                'payment_method' => AdmissionPayment::method($row),
+                'payment_method_label' => AdmissionPayment::label(AdmissionPayment::method($row)),
             ]),
         ]);
     }
@@ -86,7 +88,7 @@ class CloudData
                 $data = $record->data;
                 $status = match ($data['status'] ?? 'Pemeriksaan') {
                     'Lolos administrasi', 'Menunggu daftar ulang', 'Siap diaktifkan', 'Aktif' => 'diterima',
-                    'Perlu perbaikan' => 'ditolak', default => $existing['status'] ?? 'baru',
+                    'Ditolak' => 'ditolak', 'Perlu perbaikan' => 'perlu_perbaikan', default => $existing['status'] ?? 'baru',
                 };
                 self::store()->put('applications', (string) $record->id, array_replace($existing, [
                     'reference' => $record->code, 'status' => $status, 'admin_notes' => $data['notes'] ?? '',

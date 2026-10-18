@@ -11,7 +11,7 @@ class AdmissionIdentityTest extends CloudTestCase
     public function test_landing_applicant_gets_an_independent_nis_and_an_openable_profile(): void
     {
         $this->store->put('applications', 'landing-applicant', [
-            'reference'=>'CN-2026-RANDOM1234', 'status'=>'diterima',
+            'reference'=>'CN-2026-RANDOM1234', 'status'=>'diterima', 'payment_method'=>'offline',
             'child'=>['child_name'=>'SISWA DARI LANDING', 'birth_date'=>'2020-05-12', 'gender'=>'Perempuan'],
             'parent'=>['parent_name'=>'Wali siswa', 'phone'=>'081234567890'],
             'created_at'=>now()->toIso8601String(),
