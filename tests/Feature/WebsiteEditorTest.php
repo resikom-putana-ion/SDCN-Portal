@@ -35,7 +35,7 @@ class WebsiteEditorTest extends CloudTestCase
             'version'=>$content->editor('home')['version'], 'values'=>['title'=>'Pratinjau tanpa menyimpan <script>alert(1)</script>', 'campus_image'=>'/media/kampus-preview.jpg'],
         ])->assertOk()->assertSee('Pratinjau tanpa menyimpan &lt;script&gt;', false)->assertDontSee('<script>alert(1)</script>', false)
             ->assertSee('src="/media/kampus-preview.jpg"',false);
-        $photoIndex = array_search('people.0.photo', array_keys(\Illuminate\Support\Arr::dot($content->editor('teachers')['data'])));
+        $photoIndex = hash('sha256', 'people.0.photo');
         $this->post('/admin/website/teachers/preview', [
             'version'=>$content->editor('teachers')['version'], 'values'=>['people.0.photo'=>''],
             'uploads'=>[$photoIndex=>\Illuminate\Http\UploadedFile::fake()->createWithContent('preview.jpg',file_get_contents(base_path('tests/Fixtures/admin-profile.jpg')))],

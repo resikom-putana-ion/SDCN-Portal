@@ -50,7 +50,7 @@ class WebsiteDirectoryTest extends CloudTestCase
     public function test_new_photo_can_replace_empty_override_and_existing_team_assets_remain_valid(): void
     {
         $editor = app(WebsiteContent::class)->editor('teachers');
-        $index = array_search('people.0.photo', array_keys(\Illuminate\Support\Arr::dot($editor['data'])));
+        $index = hash('sha256', 'people.0.photo');
         $this->actingAs($this->admin())->post('/admin/website/teachers/edit', [
             'version'=>$editor['version'], 'values'=>['people.0.photo'=>''],
             'uploads'=>[$index=>UploadedFile::fake()->createWithContent('teacher.jpg', file_get_contents(base_path('tests/Fixtures/admin-profile.jpg')))],

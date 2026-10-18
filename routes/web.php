@@ -72,6 +72,7 @@ Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAd
     Route::post('/kenaikan-kelas', [WorkflowController::class, 'promotion']);
     Route::post('/website/media', [WebsiteController::class, 'upload']);
     Route::post('/website/publish', [WebsiteController::class, 'publish']);
+    Route::post('/website/{section}/discard', [WebsiteController::class, 'discard']);
     Route::get('/website/preview', [WebsiteController::class, 'preview']);
     Route::get('/website/preview/frame', [WebsiteController::class, 'frame']);
     Route::get('/website/{section}/edit', [WebsiteController::class, 'edit']);

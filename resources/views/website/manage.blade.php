@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<link rel="stylesheet" href="/css/website-editor.css">
+<link rel="stylesheet" href="/css/website-editor.css?v=20261018">
 @include('website.toolbar')
 @php
 $content=app(\App\Services\WebsiteContent::class)->all(true);
@@ -9,8 +9,8 @@ $rows=collect(\App\Services\WebsiteContent::SECTIONS)->map(fn($name,$key)=>['nam
 @endphp
 @if(in_array($screen,['website','halaman']))
 <div class="cms">
-<div class="cms-topline"><div><span class="cms-eyebrow">KONTEN SEKOLAH</span><h2>Halaman yang ingin Anda ubah</h2><p>Pilih halaman, klik bagiannya, lalu edit dari pratinjau landing page.</p></div><a class="btn secondary" href="{{ config('school.landing_url') }}" target="_blank" rel="noopener">Buka website publik</a></div>
-<div class="cms-guide"><span>01 &middot; Pilih & edit<small>Susunan mengikuti halaman website.</small></span><span>02 &middot; Periksa pratinjau<small>Coba desktop, tablet, dan ponsel.</small></span><span>03 &middot; Terbitkan<small>Draf diperiksa sebelum tampil ke publik.</small></span></div>
+<div class="cms-topline"><div><span class="cms-eyebrow">KONTEN SEKOLAH</span><h2>Kelola halaman website</h2><p>Pilih halaman untuk mengubah teks, gambar, dan susunan isinya.</p></div><a class="btn secondary" href="{{ config('school.landing_url') }}" target="_blank" rel="noopener">Buka website publik ↗</a></div>
+@if($drafts->isNotEmpty())<div class="cms-draft-notice"><div><strong>{{ $drafts->count() }} halaman memiliki draf tersimpan</strong><p>Perubahan belum tampil di website publik.</p></div><a class="btn" href="/admin/publikasi">Tinjau perubahan</a></div>@endif
 <div class="cms-page-grid">
 @foreach(\App\Services\LandingPreview::PAGES + ['settings'=>'Informasi sekolah & PPDB'] as $key=>$label)
 @php($pageData=$content[$key]??[])
@@ -18,14 +18,15 @@ $rows=collect(\App\Services\WebsiteContent::SECTIONS)->map(fn($name,$key)=>['nam
 @endforeach
 </div></div>
 @elseif($screen==='publikasi')
-<x-table :columns="['name'=>'Bagian','summary'=>'Isi','author'=>'Editor','status'=>'Status']" :rows="$rows->where('status','Draf')"/>
-<form method="post" action="/admin/website/publish" data-confirm="Terbitkan draf ke landing page sekolah?">@csrf
-<x-card title="Checklist publikasi">@foreach(['text'=>'Judul dan teks sudah diperiksa','image'=>'Gambar sudah diperiksa','contact'=>'Kontak sekolah sudah sesuai','period'=>'Periode dan biaya PPDB sudah sesuai','offline'=>'Alur penerimaan sudah jelas'] as $key=>$label)<label class="check-row"><input type="checkbox" name="checks[]" value="{{ $key }}" required>{{ $label }}</label>@endforeach
-<label class="field">Catatan publikasi<textarea name="notes" rows="3" required>{{ old('notes') }}</textarea></label></x-card>
-<div class="actions"><a class="btn secondary" href="/admin/website/preview">Pratinjau website</a><button class="btn" @disabled($drafts->isEmpty())>Terbitkan perubahan</button></div></form>
+@include('website.publication')
 @elseif($screen==='media')
 @php($media=collect(\App\Support\CloudData::collection('uploaded_files'))->filter(fn($file)=>str_starts_with($file['path'],'media/')))
 <div class="media-grid">@foreach($media as $file)<div class="media-tile"><img src="/{{ $file['path'] }}" alt="Media website"><span>/{{ $file['path'] }}</span></div>@endforeach</div>
 <x-card title="Unggah media"><form method="post" action="/admin/website/media" enctype="multipart/form-data">@csrf<div class="form-grid"><label class="field" data-crop-field>Gambar<input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" data-crop-input required><small>Maksimal 5 MB. Atur potongan pada grid sebelum mengunggah.</small></label><label class="field">Keterangan<input name="alt" required maxlength="300"></label></div><button class="btn">Unggah media</button></form></x-card>
-@elseif($screen==='terbit')<x-card title="Website berhasil diperbarui"><p>Perubahan telah diterbitkan ke landing page sekolah.</p><div class="actions"><a href="{{ config('school.landing_url') }}" class="btn" target="_blank" rel="noopener">Buka landing page</a><a href="/admin/halaman" class="btn secondary">Kelola konten</a></div></x-card>@endif
+@elseif($screen==='terbit')
+@php($publication=\App\Support\CloudData::store()->get('dashboard_runtime','website_publication'))
+<div class="cms"><div class="cms-empty"><span class="cms-empty-icon" aria-hidden="true">✓</span><h2>{{ $publication ? 'Perubahan berhasil diterbitkan' : 'Belum ada hasil publikasi' }}</h2>
+@if($publication)<p>{{ $publication['change_count'] }} isian pada {{ count($publication['pages']) }} halaman telah diperbarui oleh {{ $publication['author'] }}.</p><p>{{ implode(' · ', $publication['pages']) }}</p><p>{{ \Carbon\Carbon::parse($publication['published_at'])->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }} WIB</p>@else<p>Simpan dan tinjau draf sebelum menerbitkan perubahan website.</p>@endif
+<div class="actions"><a href="{{ config('school.landing_url') }}" class="btn" target="_blank" rel="noopener">Buka website publik ↗</a><a href="/admin/website" class="btn secondary">Kelola halaman</a></div></div></div>
+@endif
 @endsection

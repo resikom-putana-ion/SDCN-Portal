@@ -4,7 +4,7 @@ Implementasi Laravel dari paket desain A01–A08, W01–W05, dan Z01. Tata letak
 
 ## Jalankan di komputer ini
 
-Pembaruan editor: buka **Website sekolah → Ringkasan website**, pilih halaman, lalu klik **Edit bagian ini** pada pratinjau. Panel kanan mengedit satu bagian; direktori Guru & Staf menyediakan pencarian dan kelompok tim. Pratinjau mendukung desktop, tablet, dan ponsel serta perubahan yang belum disimpan. Simpan draf sebelum meninjau dan menerbitkan. Panduan integrasi kedua aplikasi tersedia di [docs/WEBSITE-INTEGRATION.md](docs/WEBSITE-INTEGRATION.md).
+Pembaruan editor: buka **Website sekolah → Ringkasan website**, pilih halaman dan bagian, lalu ubah isi pada formulir utama. Pratinjau dapat ditampilkan atau disembunyikan. **Simpan & tinjau** menyimpan isian sebelum membuka perbandingan konten lama dan baru di `/admin/publikasi`; pindah halaman melalui tab editor juga menyimpan perubahan. Publikasi menggunakan satu konfirmasi dan catatan opsional, melindungi versi yang telah ditinjau, serta menampilkan hasil publikasi. Direktori Guru & Staf tetap menyediakan pencarian dan kelompok tim. Panduan integrasi kedua aplikasi tersedia di [docs/WEBSITE-INTEGRATION.md](docs/WEBSITE-INTEGRATION.md).
 
 Aktivasi PPDB mempertahankan nomor pendaftaran dan membuat NIS dengan urutan tersendiri (`SCN-TAHUN-NOMOR`). Kedua nomor tampil terpisah pada profil siswa dan hasil aktivasi. Profil dengan field lama yang belum lengkap tetap bisa dibuka; tahun ajaran pendaftar baru dilengkapi saat daftar ulang. NIS yang sudah tersimpan tidak dinomori ulang otomatis.
 

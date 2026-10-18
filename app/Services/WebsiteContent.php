@@ -54,6 +54,11 @@ class WebsiteContent
         CloudData::transaction(function () use ($section, $data, $version) {
             $current = $this->editor($section);
             if (!hash_equals($current['version'], $version)) throw ValidationException::withMessages(['content' => 'Konten berubah sejak formulir dibuka. Muat ulang halaman sebelum menyimpan.']);
+            if (self::fingerprint($this->displayData($section, $current['published'])) === self::fingerprint($data)) {
+                CloudData::store()->delete('dashboard_content_drafts', $section);
+                CloudData::clear();
+                return;
+            }
             CloudData::store()->put('dashboard_content_drafts', $section, [
                 'base' => $current['published'], 'data' => $data, 'author' => auth()->user()?->name,
                 'updated_at' => now()->toIso8601String(),
@@ -64,6 +69,70 @@ class WebsiteContent
     public function mergeDraft(array $published, array $draft, bool $checkConflict): array
     {
         return $this->mergeMap($published, $draft['base'], $draft['data'], $checkConflict);
+    }
+
+    private function displayData(string $section, array $data): array
+    {
+        if ($section === 'teachers') return TeacherDirectory::withDefaults($data);
+        return $section === 'home' ? $data + self::HOME_DEFAULTS : $data;
+    }
+
+    /** The review and the publish action must refer to the same saved documents. */
+    public function review(): array
+    {
+        $drafts = collect(CloudData::collection('dashboard_content_drafts'))->keyBy('id')->all();
+        $published = collect(CloudData::collection('content'))->keyBy('id')->all();
+        $pages = [];
+        $versions = [];
+        foreach ($drafts as $section => $draft) {
+            $live = isset($published[$section]) ? $this->clean($published[$section]) : null;
+            $versions[$section] = [$live, $draft];
+            $conflict = null;
+            $changes = [];
+            if ($live === null || !isset(self::SECTIONS[$section])) {
+                $conflict = 'Halaman ini sudah tidak tersedia. Batalkan draf sebelum melanjutkan.';
+            } else {
+                try { $this->mergeDraft($live, $draft, true); }
+                catch (ValidationException $e) { $conflict = collect($e->errors())->flatten()->first(); }
+                $merged = $this->mergeDraft($live, $draft, false);
+                $changes = $this->changes($this->displayData($section, $live), $this->displayData($section, $merged));
+            }
+            $pages[] = [
+                'section' => $section, 'name' => self::SECTIONS[$section] ?? $section,
+                'author' => $draft['author'] ?? 'Pengelola', 'updated_at' => $draft['updated_at'] ?? null,
+                'changes' => $changes, 'conflict' => $conflict,
+                'version' => self::fingerprint([$live, $draft]),
+            ];
+        }
+        return ['pages' => $pages, 'version' => self::fingerprint($versions),
+            'change_count' => array_sum(array_map(fn ($page) => count($page['changes']), $pages)),
+            'has_conflicts' => collect($pages)->contains(fn ($page) => $page['conflict'] !== null)];
+    }
+
+    private function changes(array $before, array $after, string $prefix = ''): array
+    {
+        $changes = [];
+        foreach (array_unique([...array_keys($before), ...array_keys($after)]) as $key) {
+            $old = $before[$key] ?? null;
+            $new = $after[$key] ?? null;
+            $path = $prefix.$key;
+            if (is_array($old) || is_array($new)) {
+                $changes = [...$changes, ...$this->changes(is_array($old) ? $old : [], is_array($new) ? $new : [], $path.'.')];
+            } elseif ($old !== $new) {
+                $changes[] = ['path' => $path, 'label' => ContentLabels::label($path), 'before' => $old, 'after' => $new,
+                    'image' => (bool) preg_match('/(^image$|_image$|^logo$|\.photo$)/', $path)];
+            }
+        }
+        return $changes;
+    }
+
+    public function discard(string $section, string $version): void
+    {
+        CloudData::transaction(function () use ($section, $version) {
+            $editor = $this->editor($section);
+            if (!hash_equals($editor['version'], $version)) throw ValidationException::withMessages(['content' => 'Draf sudah berubah. Muat ulang tinjauan sebelum membatalkannya.']);
+            CloudData::store()->delete('dashboard_content_drafts', $section);
+        });
     }
 
     private function mergeMap(array $current, array $base, array $draft, bool $check, string $prefix = ''): array
@@ -92,9 +161,14 @@ class WebsiteContent
         }
         return $current;
     }
-    public function publish(): int
+    public function publish(?string $reviewVersion = null): int
     {
-        return CloudData::transaction(function () {
+        return CloudData::transaction(function () use ($reviewVersion) {
+            $review = $this->review();
+            if (!$review['pages'] || $review['change_count'] === 0) throw ValidationException::withMessages(['content' => 'Belum ada perubahan tersimpan untuk diterbitkan. Edit halaman dan simpan draf terlebih dahulu.']);
+            if ($reviewVersion !== null && !hash_equals($review['version'], $reviewVersion)) {
+                throw ValidationException::withMessages(['content' => 'Draf atau konten terbit berubah sejak tinjauan dibuka. Periksa kembali perubahan terbaru sebelum menerbitkan.']);
+            }
             $drafts = CloudData::store()->all('dashboard_content_drafts');
             foreach ($drafts as $draft) {
                 $published = CloudData::store()->get('content', $draft['id']);
@@ -106,6 +180,10 @@ class WebsiteContent
             }
             // Invalidate the existing landing-page cache in the same commit.
             (new FirestoreCacheStore(CloudData::store(), config('school.landing_cache_prefix')))->forget('school-content-firestore');
+            CloudData::store()->put('dashboard_runtime', 'website_publication', [
+                'pages' => array_column($review['pages'], 'name'), 'change_count' => $review['change_count'],
+                'author' => auth()->user()?->name, 'published_at' => now()->toIso8601String(),
+            ]);
             CloudData::clear();
             return count($drafts);
         });

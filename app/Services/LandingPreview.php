@@ -11,7 +11,7 @@ class LandingPreview
     {
         // Public actions are deliberately inert inside the authenticated preview.
         if (!isset(self::PAGES[$page]) && !in_array($page, ['privacy','terms'], true)) return '#';
-        return '/admin/website/preview/frame?'.http_build_query(['page'=>$page, 'edit'=>request()->boolean('edit') ? 1 : 0]);
+        return '/admin/website/preview/frame?'.http_build_query(['page'=>$page, 'edit'=>request()->boolean('edit') ? 1 : 0, 'state'=>request('state') === 'published' ? 'published' : 'draft']);
     }
 
     public static function asset(string $path): string

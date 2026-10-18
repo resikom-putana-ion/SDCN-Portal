@@ -4,11 +4,16 @@ Pembaruan lokal 17 Oktober 2026. Dashboard menggunakan branch `main2-juan`. Acua
 
 ## Mengelola website
 
-1. Buka **Website sekolah → Ringkasan website** (`/admin/website`). Kartu halaman menggantikan tabel field panjang.
-2. Pilih **Edit halaman**. Susunan bagian ada di kiri, pratinjau landing page di tengah, dan isian bagian terpilih di kanan. Klik **Edit bagian ini** pada halaman atau pilih bagian dari daftar kiri.
-3. Ubah teks atau foto. Pratinjau diperbarui dari isian yang belum disimpan; tombol **Perbarui pratinjau** tersedia untuk pemeriksaan manual. Gambar memakai crop grid yang sama dengan dashboard.
-4. Pilih **Desktop**, **Tablet**, atau **Ponsel** untuk memeriksa responsivitas. **Pratinjau penuh** membuka area peninjauan yang lebih besar.
-5. **Simpan draf**, lalu buka **Tinjau & terbitkan**. Konten publik baru berubah setelah checklist dan publikasi selesai. Tombol tambah, hapus, naik, dan turun menyimpan susunan item ke draf.
+1. Buka **Website sekolah → Ringkasan website** (`/admin/website`). Halaman yang memiliki perubahan tersimpan ditandai **Draf**; ringkasan di atas kartu membuka tinjauan.
+2. Pilih **Edit halaman**, lalu bagian yang ingin diubah. Formulir menggunakan ruang utama. **Tampilkan pratinjau** membuka tampilan pendamping; pada layar laptop yang sempit pratinjau disembunyikan terlebih dahulu agar isian mudah digunakan.
+3. Ubah teks atau foto. **Simpan draf** menyimpan tanpa keluar dari editor; **Ctrl/Cmd+S** juga tersedia. Pilihan halaman pada editor menyimpan perubahan sebelum berpindah. Jika penyimpanan gagal, isian tetap tersedia dan pesan kesalahan muncul di formulir.
+4. Gunakan **Desktop**, **Tablet**, atau **Ponsel** pada pratinjau. Gambar memakai crop grid dan identitas field yang tetap, sehingga perubahan urutan field Firestore tidak memindahkan unggahan ke bagian lain.
+5. Klik **Simpan & tinjau**. Isian disimpan terlebih dahulu, kemudian `/admin/publikasi` menampilkan perbandingan **Sedang tayang** dan **Setelah diterbitkan** untuk setiap perubahan, termasuk gambar. Pratinjau penuh juga menyediakan pilihan **Draf tersimpan** dan **Sedang tayang**.
+6. Periksa perubahan, centang satu persetujuan, lalu **Terbitkan … halaman**. Catatan bersifat opsional. Jika draf atau konten publik berubah sejak tinjauan dibuka, publikasi ditolak sampai versi terbaru diperiksa. Halaman hasil menampilkan halaman, jumlah perubahan, pengelola, dan waktu publikasi yang benar-benar berhasil.
+
+Formulir yang tidak berubah tidak membuat draf baru. Halaman publikasi kosong menjelaskan cara membuat draf dan tidak menampilkan tombol terbitkan. **Batalkan draf halaman ini** menghapus draf yang ditinjau dengan konfirmasi; versi terbit tetap digunakan. Tombol tambah, hapus, naik, dan turun juga menyimpan isian yang sedang diedit.
+
+Pengujian `WebsitePublicationTest` mencakup simpan–tinjau–terbit seluruh delapan halaman, invalidasi cache landing, draf kosong, penolakan versi tinjauan lama, pembatalan draf, dan pemetaan unggahan setelah urutan field berubah. Pemeriksaan browser editor mencakup kegagalan simpan, percobaan ulang, simpan sebelum berpindah, konfirmasi publikasi, serta tata letak laptop dan ponsel. Seluruh penulisan pengujian memakai Firestore memori.
 
 Pratinjau memakai template, CSS, dan aset landing page dalam iframe terpisah. Endpoint berada di balik autentikasi serta akses pengelola website. Formulir pendaftaran dan kunjungan dalam pratinjau tidak mengirim data. Preview isian tidak membuat dokumen draf atau menyimpan file ke Firestore.
 

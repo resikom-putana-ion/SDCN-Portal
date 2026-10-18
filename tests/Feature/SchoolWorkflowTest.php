@@ -90,8 +90,9 @@ class SchoolWorkflowTest extends CloudTestCase
         $this->post('/admin/website/hero/edit', ['values' => \Illuminate\Support\Arr::dot($hero), 'version' => app(\App\Services\WebsiteContent::class)->editor('home')['version']])->assertSessionHasNoErrors();
         $this->get('/website')->assertNotFound();
         $this->get('/admin/website/preview/frame')->assertSee('Judul baru belum terbit');
-        $this->post('/admin/website/publish', ['checks' => ['text'], 'notes' => 'Sudah diperiksa'])->assertSessionHasErrors('checks');
-        $this->post('/admin/website/publish', ['checks' => ['text', 'image', 'contact', 'period', 'offline'], 'notes' => 'Sudah diperiksa'])->assertRedirect('/admin/terbit');
+        $version = app(\App\Services\WebsiteContent::class)->review()['version'];
+        $this->post('/admin/website/publish', ['review_version'=>$version])->assertSessionHasErrors('confirmed');
+        $this->post('/admin/website/publish', ['review_version'=>$version, 'confirmed'=>'1', 'notes'=>'Sudah diperiksa'])->assertRedirect('/admin/terbit');
         $this->assertSame('Judul baru belum terbit', DB::store()->get('content', 'home')['title']);
         $this->get('/admin/website/preview/frame')->assertSee('Judul baru belum terbit');
     }
