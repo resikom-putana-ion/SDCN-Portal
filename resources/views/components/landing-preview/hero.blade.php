@@ -16,7 +16,7 @@
             @foreach([
                 ['src'=>$data['campus_image'] ?? '/landing-preview/assets/design/sd-ceria-nusantara-campus.png','alt'=>'Kawasan SD Ceria Nusantara dari udara','caption'=>'Kawasan SD Ceria Nusantara'],
                 ['src'=>$data['image'],'alt'=>'Siswa belajar bersama di kelas','caption'=>'Belajar bersama','source'=>null],
-                ['src'=>'/landing-preview/assets/design/asset-04.png','alt'=>'Suasana ruang kelas SD Ceria Nusantara','caption'=>'Ruang belajar yang ceria','source'=>null],
+                ['src'=>$data['classroom_image'] ?? '/landing-preview/assets/design/asset-04.png','alt'=>'Suasana ruang kelas SD Ceria Nusantara','caption'=>'Ruang belajar yang ceria','source'=>null],
             ] as $slide)
             <img class="hero-slide @if($loop->first) is-active @endif" src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}" data-caption="{{ $slide['caption'] }}" data-concept="{{ $slide['concept'] ?? '' }}" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif width="1672" height="1045" @if(!$loop->first) aria-hidden="true" @endif>
             @endforeach

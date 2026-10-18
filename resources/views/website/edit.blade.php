@@ -12,7 +12,7 @@
 @endphp
 <div class="cms cms-editor" data-website-editor data-section="{{ $section }}" data-initial-block="{{ $selected }}" data-preview-page="{{ $previewPage }}">
     <div class="cms-topline">
-        <div><a class="cms-back" href="/admin/website">← Semua halaman</a><h2>{{ \App\Services\WebsiteContent::SECTIONS[$section] }}</h2><p>Ubah isi, simpan draf, lalu tinjau perubahan sebelum diterbitkan.</p></div>
+        <div><a class="cms-back" href="/admin/website">← Semua halaman</a><h2>{{ \App\Services\WebsiteContent::SECTIONS[$section] }}</h2><p>Simpan draf menyimpan perubahan di Firebase. Pilih Simpan & tinjau, lalu Terbitkan agar perubahan tampil di website sekolah.</p></div>
         <div class="actions"><button class="btn secondary" type="button" data-cms-toggle-preview aria-expanded="true">Sembunyikan pratinjau</button><button class="btn" type="submit" form="website-editor-form" name="intent" value="review">Simpan & tinjau</button></div>
     </div>
     <nav class="cms-pages" aria-label="Halaman website">

@@ -13,7 +13,7 @@ class WebsiteEditor
         $hero = ['Pembuka halaman', ['eyebrow','title','description','image'], '.hero'];
         $definitions = match ($section) {
             'home' => [
-                'hero'=>['Pembuka beranda', ['eyebrow','title','description','campus_image','image'], '.hero'],
+                'hero'=>['Pembuka beranda', ['eyebrow','title','description','campus_image','image','classroom_image'], '.hero'],
                 'profile'=>['Profil sekolah', ['profile_title','profile_subtitle','profile_text','values'], '.home-profile'],
                 'advantages'=>['Keunggulan sekolah', ['advantages'], '.home-advantages'],
                 'programs'=>['Program unggulan', ['programs'], '.home-programs'],

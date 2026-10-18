@@ -1,5 +1,21 @@
 # Editor visual, PPDB, dan integrasi landing page
 
+## Perbaikan tiga slide beranda — 19 Oktober 2026
+
+Checkout landing pada mesin ini berada di `E:\Landing Page Website`, terpisah dari dashboard. Template landing sebelumnya menetapkan gambar slide pertama dan ketiga secara statis, sehingga unggahan `campus_image` dari dashboard tidak ditampilkan. Kedua template (landing dan pratinjau dashboard) sekarang memakai kontrak dokumen `content/home` yang sama:
+
+| Slide | Field | Fallback untuk dokumen lama |
+| --- | --- | --- |
+| 1 · Kampus | `campus_image` | `/assets/design/sd-ceria-nusantara-campus.png` |
+| 2 · Kegiatan | `image` | Mengikuti gambar beranda yang sudah tersedia |
+| 3 · Ruang kelas | `classroom_image` | `/assets/design/asset-04.png` |
+
+`content/home.classroom_image` terpisah dari `content/settings.classroom_image`; foto slide beranda dan foto bagian fasilitas dapat diatur sendiri. Editor beranda menampilkan ketiga unggahan pada bagian Pembuka beranda.
+
+Semua delapan bagian website memakai Firebase. **Simpan draf** menulis ke `dashboard_content_drafts/{section}`. **Simpan & tinjau → Terbitkan** menggabungkan perubahan ke `content/{section}` dan menghapus cache landing `school-content-firestore`. Unggahan berada di `uploaded_files`/`uploaded_file_chunks` dan dilayani melalui `/media/{filename}` di masing-masing aplikasi. Menyimpan draf tidak otomatis mengubah website publik.
+
+Patch portabel perubahan landing tersedia di `docs/patches/landing-home-slides.patch` dan sudah diterapkan pada checkout lokal tersebut. Deployment terpisah harus menyertakan perubahan kedua proyek; jangan menerapkan patch dua kali. Tidak ada penerbitan draf atau penulisan konten Firebase produksi dalam perbaikan kode ini.
+
 Pembaruan lokal 17 Oktober 2026. Dashboard menggunakan branch `main2-juan`. Acuan landing page adalah [SD-Ceria-Nusantara---Landing-Page](https://github.com/dovahkiinn-5/SD-Ceria-Nusantara---Landing-Page), revisi `cb613dc` beserta perbaikan kontrak konten pada sesi ini.
 
 ## Mengelola website

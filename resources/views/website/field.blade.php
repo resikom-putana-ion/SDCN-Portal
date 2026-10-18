@@ -10,7 +10,7 @@
         }
     }
 @endphp
-<label class="field" @if($imageField) data-crop-field @endif>{{ $key==='campus_image' ? 'Foto kampus (slide pertama)' : ($section==='home' && $key==='image' ? 'Foto kegiatan (slide berikutnya)' : \App\Services\ContentLabels::label(is_numeric(collect(explode('.',$key))->last()) ? $key : collect(explode('.',$key))->last())) }}
+<label class="field" @if($imageField) data-crop-field @endif>{{ $section==='home' && in_array($key, ['campus_image','image','classroom_image']) ? match($key) { 'campus_image'=>'Foto slide 1 · Kampus', 'image'=>'Foto slide 2 · Kegiatan', 'classroom_image'=>'Foto slide 3 · Ruang kelas' } : \App\Services\ContentLabels::label(is_numeric(collect(explode('.',$key))->last()) ? $key : collect(explode('.',$key))->last()) }}
 @if($imageField)
     @if($value)<img data-crop-preview src="{{ \App\Services\LandingPreview::asset((string)$value) }}" alt="{{ \App\Services\ContentLabels::label($key) }}" class="cms-image-preview">@endif
     <details class="cms-image-path"><summary>Lokasi gambar</summary><input name="values[{{ $key }}]" value="{{ $shown }}" aria-label="Lokasi gambar {{ \App\Services\ContentLabels::label($key) }}"></details>

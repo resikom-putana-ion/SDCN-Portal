@@ -8,7 +8,10 @@ use Illuminate\Validation\ValidationException;
 
 class WebsiteContent
 {
-    public const HOME_DEFAULTS = ['campus_image'=>'/assets/design/sd-ceria-nusantara-campus.png'];
+    public const HOME_DEFAULTS = [
+        'campus_image'=>'/assets/design/sd-ceria-nusantara-campus.png',
+        'classroom_image'=>'/assets/design/asset-04.png',
+    ];
     public const SECTIONS = ['settings' => 'Informasi Sekolah & PPDB', 'home' => 'Beranda', 'about' => 'Profil Sekolah', 'program' => 'Program', 'facilities' => 'Fasilitas', 'teachers' => 'Guru & Staf', 'gallery' => 'Berita & Galeri', 'contact' => 'Kontak'];
     public function section(string $section): string
     {

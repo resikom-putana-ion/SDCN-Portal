@@ -1,0 +1,49 @@
+--- a/resources/views/components/hero.blade.php
++++ b/resources/views/components/hero.blade.php
+@@ -14,9 +14,9 @@
+         @if($home)
+         <div class="hero-slides">
+             @foreach([
+-                ['src'=>'/assets/design/sd-ceria-nusantara-campus.png','alt'=>'Kawasan SD Ceria Nusantara dari udara','caption'=>'Kawasan SD Ceria Nusantara'],
++                ['src'=>$data['campus_image'] ?? '/assets/design/sd-ceria-nusantara-campus.png','alt'=>'Kawasan SD Ceria Nusantara dari udara','caption'=>'Kawasan SD Ceria Nusantara'],
+                 ['src'=>$data['image'],'alt'=>'Siswa belajar bersama di kelas','caption'=>'Belajar bersama','source'=>null],
+-                ['src'=>'/assets/design/asset-04.png','alt'=>'Suasana ruang kelas SD Ceria Nusantara','caption'=>'Ruang belajar yang ceria','source'=>null],
++                ['src'=>$data['classroom_image'] ?? '/assets/design/asset-04.png','alt'=>'Suasana ruang kelas SD Ceria Nusantara','caption'=>'Ruang belajar yang ceria','source'=>null],
+             ] as $slide)
+             <img class="hero-slide @if($loop->first) is-active @endif" src="{{ $slide['src'] }}" alt="{{ $slide['alt'] }}" data-caption="{{ $slide['caption'] }}" data-concept="{{ $slide['concept'] ?? '' }}" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif width="1672" height="1045" @if(!$loop->first) aria-hidden="true" @endif>
+             @endforeach
+--- a/resources/content/site.php
++++ b/resources/content/site.php
+@@ -17,7 +17,9 @@
+     'home' => [
+         'eyebrow' => 'TUMBUH CERIA SETIAP HARI', 'title' => "Belajar Ceria,\nTumbuh Percaya Diri",
+         'description' => 'Ruang belajar yang hangat untuk anak mengeksplorasi, bertanya, dan menemukan potensi terbaiknya.',
++        'campus_image' => '/assets/design/sd-ceria-nusantara-campus.png',
+         'image' => '/assets/design/asset-03.png',
++        'classroom_image' => '/assets/design/asset-04.png',
+         'tablet_description' => 'Ruang belajar yang hangat untuk anak mengeksplorasi dan menemukan potensinya.',
+         'tablet' => [
+             'profile_text'=>'Kami percaya setiap anak punya cara unik untuk belajar. Guru dan keluarga berjalan searah untuk mendampingi pertumbuhannya.',
+--- a/tests/Feature/SharedTeacherContentTest.php
++++ b/tests/Feature/SharedTeacherContentTest.php
+@@ -13,6 +13,20 @@
+ class SharedTeacherContentTest extends TestCase
+ {
+     use RefreshDatabase;
++
++    public function test_all_three_home_slides_read_published_dashboard_fields(): void
++    {
++        $content = app(SchoolContent::class);
++        $home = $content->defaults()['home'];
++        foreach (['campus_image', 'image', 'classroom_image'] as $field) $home[$field] = '/media/updated-'.$field.'.jpg';
++        $content->save('home', $home);
++        $response = $this->get('/')->assertOk();
++        $this->assertSame(3, substr_count($response->getContent(), 'class="hero-slide '));
++        foreach (['campus_image', 'image', 'classroom_image'] as $field) $response->assertSee($home[$field], false);
++        $response->assertDontSee('src="/assets/design/sd-ceria-nusantara-campus.png"', false);
++    }
++
++
+ 
+     public function test_published_shared_directory_updates_public_cards_organization_subjects_and_hero(): void
+     {

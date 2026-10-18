@@ -9,6 +9,35 @@ use Tests\Support\CloudTestCase;
 
 class WebsitePublicationTest extends CloudTestCase
 {
+    public function test_all_three_home_slides_upload_publish_and_render_independently(): void
+    {
+        $this->actingAs($this->admin());
+        $content = app(WebsiteContent::class);
+        $this->get('/admin/website/home/edit')->assertOk()
+            ->assertSee('Foto slide 1')->assertSee('Foto slide 2')->assertSee('Foto slide 3');
+        $original = $this->store->get('content', 'home');
+        $paths = [];
+        foreach (['campus_image', 'image', 'classroom_image'] as $key) {
+            $editor = $content->editor('home');
+            $this->post('/admin/website/home/edit', [
+                'version'=>$editor['version'], 'values'=>['title'=>$editor['data']['title']],
+                'uploads'=>[hash('sha256', $key)=>UploadedFile::fake()->createWithContent($key.'.jpg', file_get_contents(base_path('tests/Fixtures/admin-profile.jpg')))],
+            ])->assertSessionHasNoErrors();
+            $paths[$key] = $content->editor('home')['data'][$key];
+            $this->assertStringStartsWith('/media/', $paths[$key]);
+            $this->assertSame($original, $this->store->get('content', 'home'));
+            foreach ($paths as $field=>$path) $this->assertSame($path, $content->editor('home')['data'][$field]);
+        }
+        $this->post('/admin/website/publish', ['review_version'=>$content->review()['version'], 'confirmed'=>1])->assertSessionHasNoErrors();
+        $preview = $this->get('/admin/website/preview/frame?page=home&state=published')->assertOk();
+        $this->assertSame(3, substr_count($preview->getContent(), 'class="hero-slide '));
+        foreach ($paths as $key=>$path) {
+            $this->assertSame($path, $this->store->get('content', 'home')[$key]);
+            $preview->assertSee($path, false);
+            $this->get($path)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        }
+    }
+
     public function test_all_pages_save_review_and_publish_the_exact_reviewed_content(): void
     {
         $this->actingAs($this->admin());

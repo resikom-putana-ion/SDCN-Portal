@@ -17,6 +17,7 @@ execFileSync(php,[path.join(__dirname,'render-editor-fixtures.php')],{cwd:root,s
         await context.route('**/*',async route => {
             const url = new URL(route.request().url());
             let file;
+            if (url.pathname === '/admin/notifikasi/feed') return route.fulfill({json:{notifications:[],count:0,checked_at:'2026-10-19T00:00:00Z'}});
             if (url.pathname === '/admin/website/home/edit' && route.request().method() === 'POST') {
                 saves.push(route.request().postData());
                 if (failSave) {
@@ -47,6 +48,7 @@ execFileSync(php,[path.join(__dirname,'render-editor-fixtures.php')],{cwd:root,s
         assert.equal(await page.locator('.cms-page-card').count(),8);
         await page.screenshot({path:path.join(output,'manage-desktop.png'),fullPage:true});
         await page.goto('http://editor.test/admin/website/home/edit');
+        assert.equal(await page.locator('[data-cms-panel=hero] input[type=file]').count(),3,'All three homepage slides have an upload field');
         const frame = page.frameLocator('[data-cms-frame]');
         await frame.getByRole('button',{name:'Edit Pembuka beranda',exact:true}).waitFor();
         await page.evaluate(()=>document.fonts.ready);
