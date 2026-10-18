@@ -5,7 +5,7 @@
     if ($section === 'teachers') {
         if (preg_match('/^people\.\d+\.group$/', $key)) $options = ['pimpinan'=>'Pimpinan', 'guru'=>'Guru', 'staf'=>'Staf'];
         if (str_ends_with($key, '.tone')) $options = ['blue'=>'Biru', 'green'=>'Hijau', 'yellow'=>'Kuning'];
-        if (preg_match('/^structure\.(head|branches\.\d+\.(lead|teams\.\d+\.members\.\d+))$/', $key)) {
+        if (preg_match('/^(featured_people\.\d+|structure\.(head|branches\.\d+\.(lead|teams\.\d+\.members\.\d+)))$/', $key)) {
             $options = array_map(fn ($person) => $person['name'].' — '.$person['role'], $data['people']);
         }
     }

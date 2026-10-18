@@ -17,7 +17,7 @@ class WebsiteEditor
                 'profile'=>['Profil sekolah', ['profile_title','profile_subtitle','profile_text','values'], '.home-profile'],
                 'advantages'=>['Keunggulan sekolah', ['advantages'], '.home-advantages'],
                 'programs'=>['Program unggulan', ['programs'], '.home-programs'],
-                'principal'=>['Sambutan kepala sekolah', ['principal_name','principal_quote'], '.home-teachers'],
+                'principal'=>['Sambutan kepala sekolah', ['principal_quote'], '.home-teachers'],
                 'testimonials'=>['Cerita keluarga', ['testimonials'], '.home-testimonials'],
                 'faq'=>['Pertanyaan umum', ['faq'], '.home-faq'],
                 'tablet'=>['Tampilan tablet', ['tablet_description','tablet'], '.tablet-stats'],
@@ -39,7 +39,7 @@ class WebsiteEditor
                 'people'=>['Direktori Guru & Staf', ['people'], '#direktori'],
                 'subjects'=>['Mata pelajaran', ['subjects'], '#mata-pelajaran'],
                 'structure'=>['Struktur organisasi', ['structure'], '#struktur'],
-                'team'=>['Ringkasan guru di beranda', ['team'], '.team-grid'],
+                'team'=>['Guru di beranda', ['featured_people'], '.team-grid'],
             ],
             'gallery' => ['hero'=>$hero, 'news'=>['Berita sekolah', ['news'], '.section:nth-of-type(2)']],
             'contact' => ['hero'=>$hero, 'visit'=>['Kunjungan sekolah', ['visit_hours'], '#kunjungan']],
@@ -52,7 +52,11 @@ class WebsiteEditor
             if ($keys) $blocks[$id] = compact('label','keys','selector');
             $used = [...$used, ...$keys];
         }
-        $other = array_diff(array_keys($data), $used, $section === 'teachers' ? ['eyebrow','title','description','image'] : []);
+        $hidden = match ($section) {
+            'teachers' => ['eyebrow','title','description','image','directory','team'],
+            'home' => ['principal_name'], default => [],
+        };
+        $other = array_diff(array_keys($data), $used, $hidden);
         if ($other) $blocks['other'] = ['label'=>'Informasi lainnya', 'keys'=>array_values($other), 'selector'=>'main'];
 
         return $blocks;
@@ -63,7 +67,7 @@ class WebsiteEditor
         $lists = match ($section) {
             'home'=>['values','advantages','programs','testimonials','faq','tablet.advantages','tablet.programs','tablet.admission'],
             'about'=>['values'], 'program'=>['approach','curriculum','activities'],
-            'facilities'=>['spaces','features'], 'teachers'=>['people','team','values','subjects','structure.branches'],
+            'facilities'=>['spaces','features'], 'teachers'=>['people','featured_people','values','subjects','structure.branches'],
             'gallery'=>['news'], default=>[],
         };
 
@@ -82,7 +86,11 @@ class WebsiteEditor
         $indices = array_keys($items);
         if ($action === 'add') {
             if (count($items) >= 100) self::invalid('Maksimal 100 item pada satu daftar.');
-            $items[] = self::newItem($path, $items);
+            if ($path === 'featured_people') {
+                $available = array_values(array_diff(array_keys($data['people']), $items));
+                if (!$available) self::invalid('Semua anggota sudah dipilih untuk beranda.');
+                $items[] = $available[0];
+            } else $items[] = self::newItem($path, $items);
         } else {
             $index = isset($match[3]) ? (int) $match[3] : -1;
             if (!array_key_exists($index, $items)) self::invalid('Item tidak tersedia. Muat ulang editor.');
@@ -104,6 +112,8 @@ class WebsiteEditor
         Arr::set($data, $path, $items);
         if ($path === 'people' && $action !== 'add') {
             $mapping = array_flip($indices);
+            $data['featured_people'] = array_values(array_map(fn ($old) => $mapping[$old],
+                array_filter($data['featured_people'], fn ($old) => isset($mapping[$old]))));
             $data['structure']['head'] = $mapping[$data['structure']['head']];
             foreach ($data['structure']['branches'] as &$branch) {
                 $branch['lead'] = $mapping[$branch['lead']];

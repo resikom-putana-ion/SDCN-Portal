@@ -20,9 +20,43 @@ class TeacherDirectory
 
     public static function withDefaults(array $saved): array
     {
+        // The organization chart owns the profiles. Legacy copies must never override it.
+        if (!isset($saved['people']) && !empty($saved['directory'])) $saved['people'] = $saved['directory'];
         $data = $saved + self::defaults();
-        $data['people'] = array_map(fn (array $person) => $person + ['photo'=>null], $data['people']);
+        $data['people'] = array_map(function (array $person) {
+            if (isset($person['portrait']) && ctype_digit((string) $person['portrait'])) $person['portrait'] = (int) $person['portrait'];
+            return $person + ['photo'=>null];
+        }, $data['people']);
+        if (!array_key_exists('featured_people', $data)) {
+            $featured = [];
+            foreach ($saved['team'] ?? [] as $member) {
+                $index = array_search($member['name'], array_column($data['people'], 'name'), true);
+                if ($index === false) {
+                    // Old directory and organization profiles share a portrait identity.
+                    $old = collect($saved['directory'] ?? [])->firstWhere('name', $member['name']);
+                    $matches = $old && isset($old['portrait'])
+                        ? array_keys(array_filter($data['people'], fn ($person) => $person['portrait'] === (int) $old['portrait'])) : [];
+                    if (count($matches) === 1) $index = $matches[0];
+                }
+                if ($index !== false) $featured[] = $index;
+            }
+            $data['featured_people'] = array_values(array_unique($featured ?: array_column($data['structure']['branches'], 'lead')));
+        }
+        unset($data['directory'], $data['team']);
         return $data;
+    }
+
+    public static function principal(array $data): array
+    {
+        $data = self::withDefaults($data);
+        return $data['people'][$data['structure']['head']];
+    }
+
+    public static function homepagePeople(array $data): array
+    {
+        $data = self::withDefaults($data);
+        $indices = array_unique([$data['structure']['head'], ...$data['featured_people']]);
+        return array_values(array_map(fn ($index) => $data['people'][$index], $indices));
     }
 
     public static function validate(array $data): void
@@ -36,6 +70,8 @@ class TeacherDirectory
             'people.*.group' => ['required', Rule::in(['pimpinan', 'guru', 'staf'])],
             'people.*.portrait' => 'required|integer|min:0|max:29',
             'people.*.photo' => ['nullable', 'string', 'regex:#^/(?:assets/(?:design|team)|media)/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$#'],
+            'featured_people' => 'present|array|list|max:100',
+            'featured_people.*' => ['required', 'integer', 'distinct', Rule::in($indices)],
             'subjects' => 'present|array|list|max:100',
             'subjects.*.title' => 'required|string|max:150',
             'subjects.*.by' => 'required|string|max:300',

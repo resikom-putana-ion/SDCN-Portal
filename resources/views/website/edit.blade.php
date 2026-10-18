@@ -4,6 +4,7 @@
 <script src="/js/website-editor.js?v=20261018" defer></script>
 @php
     $selected = old('block', request('block'));
+    if ($section === 'teachers' && $selected === 'other') $selected = 'people';
     if (!is_string($selected) || !isset($blocks[$selected])) $selected = array_key_first($blocks);
     $previewPage = $section === 'settings' ? 'home' : $section;
     if ($section === 'settings' && $selected === 'legal') $previewPage = 'privacy';
@@ -43,8 +44,9 @@
                             @include('website.editor-node', ['node'=>\Illuminate\Support\Arr::get($data,$path), 'path'=>$path])
                         @endforeach
                     @endif
-                    @if($section==='teachers' && $id==='team')<p class="cms-help">Kartu ringkasan pada beranda versi tablet. Direktori lengkap dikelola pada bagian Guru & Staf.</p>@endif
+                    @if($section==='teachers' && $id==='team')<p class="cms-help">Pilih profil dari direktori. Nama, jabatan, dan foto selalu mengikuti profil yang sama dengan struktur organisasi. Kepala sekolah terpilih otomatis tampil pertama.</p>@endif
                     @if($section==='teachers' && $id==='structure')<p class="cms-help">Pilih anggota berdasarkan nama. Nama dan foto mengikuti data direktori.</p>@endif
+                    @if($section==='home' && $id==='principal')<p class="cms-help">Nama dan foto mengikuti kepala sekolah di <a href="/admin/website/teachers/edit?block=structure">Struktur organisasi Guru & Staf</a>.</p>@endif
                 </section>
                 @endforeach
             </fieldset>

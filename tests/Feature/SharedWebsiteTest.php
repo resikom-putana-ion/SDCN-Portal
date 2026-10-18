@@ -34,19 +34,19 @@ class SharedWebsiteTest extends CloudTestCase
     }
     public function test_editor_reads_live_nested_fields_and_publish_preserves_unknown_fields(): void
     {
-        $row = $this->store->get('content', 'teachers');
-        $row['team'][0]['name'] = 'Kepala Sekolah dari Firestore';
+        $row = \App\Services\TeacherDirectory::withDefaults($this->store->get('content', 'teachers'));
+        $row['people'][0]['name'] = 'Kepala Sekolah dari Firestore';
         $row['future_feature'] = ['enabled' => true, 'count' => 7];
         $this->store->put('content', 'teachers', $row);
         $this->actingAs($this->admin())->get('/admin/website/teachers/edit')->assertOk()->assertSee('Kepala Sekolah dari Firestore');
         $editor = app(WebsiteContent::class)->editor('teachers');
         $values = Arr::dot($editor['data']);
         $values = array_map(fn ($v) => is_bool($v) ? ($v ? '1' : '0') : (string) $v, $values);
-        $values['team.0.name'] = 'Nama baru';
+        $values['people.0.name'] = 'Nama baru';
         $this->post('/admin/website/teachers/edit', ['version' => $editor['version'], 'values' => $values])->assertSessionHasNoErrors();
-        $this->assertSame('Kepala Sekolah dari Firestore', $this->store->get('content', 'teachers')['team'][0]['name']);
+        $this->assertSame('Kepala Sekolah dari Firestore', $this->store->get('content', 'teachers')['people'][0]['name']);
         app(WebsiteContent::class)->publish();
-        $this->assertSame('Nama baru', $this->store->get('content', 'teachers')['team'][0]['name']);
+        $this->assertSame('Nama baru', $this->store->get('content', 'teachers')['people'][0]['name']);
         $this->assertSame(['enabled' => true, 'count' => 7], $this->store->get('content', 'teachers')['future_feature']);
     }
 

@@ -34,7 +34,7 @@ class WebsiteContent
             if (isset($all[$row['id']])) $all[$row['id']] = $this->mergeDraft($all[$row['id']], $row, false);
         }
         if (isset($all['teachers'])) $all['teachers'] = TeacherDirectory::withDefaults($all['teachers']);
-        if (isset($all['home'])) $all['home'] += self::HOME_DEFAULTS;
+        if (isset($all['home'])) $all['home'] = $this->displayData('home', $all['home']);
         return $all;
     }
     public function editor(string $section): array
@@ -44,13 +44,14 @@ class WebsiteContent
         $published = $this->clean($published);
         $draft = CloudData::store()->get('dashboard_content_drafts', $section);
         $data = $draft ? $this->mergeDraft($published, $draft, false) : $published;
-        if ($section === 'teachers') $data = TeacherDirectory::withDefaults($data);
-        if ($section === 'home') $data += self::HOME_DEFAULTS;
+        $data = $this->displayData($section, $data);
         return ['published' => $published, 'data' => $data,
             'version' => self::fingerprint([$published, $draft]), 'draft' => $draft];
     }
     public function save(string $section, array $data, string $version): void
     {
+        $data = $this->displayData($section, $data);
+        if ($section === 'teachers') TeacherDirectory::validate($data);
         CloudData::transaction(function () use ($section, $data, $version) {
             $current = $this->editor($section);
             if (!hash_equals($current['version'], $version)) throw ValidationException::withMessages(['content' => 'Konten berubah sejak formulir dibuka. Muat ulang halaman sebelum menyimpan.']);
@@ -74,6 +75,7 @@ class WebsiteContent
     private function displayData(string $section, array $data): array
     {
         if ($section === 'teachers') return TeacherDirectory::withDefaults($data);
+        if ($section === 'home') unset($data['principal_name']);
         return $section === 'home' ? $data + self::HOME_DEFAULTS : $data;
     }
 
@@ -173,7 +175,7 @@ class WebsiteContent
             foreach ($drafts as $draft) {
                 $published = CloudData::store()->get('content', $draft['id']);
                 if (!$published) throw ValidationException::withMessages(['content' => 'Bagian website sudah dihapus. Muat ulang editor.']);
-                $merged = $this->mergeDraft($this->clean($published), $draft, true);
+                $merged = $this->displayData($draft['id'], $this->mergeDraft($this->clean($published), $draft, true));
                 if ($draft['id'] === 'teachers') TeacherDirectory::validate(TeacherDirectory::withDefaults($merged));
                 CloudData::store()->put('content', $draft['id'], $merged);
                 CloudData::store()->delete('dashboard_content_drafts', $draft['id']);

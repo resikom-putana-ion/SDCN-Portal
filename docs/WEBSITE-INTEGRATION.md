@@ -23,11 +23,11 @@ Pada editor **Guru & Staf → Direktori Guru & Staf**, cari nama/peran atau pili
 
 Gunakan **Tambah anggota** untuk membuat profil baru. Pilih foto, nama, jabatan, kategori, dan deskripsi pada kartunya. Penempatan anggota dalam tim diatur di **Struktur organisasi**. Penghapusan anggota memperbarui indeks referensi organisasi; perpindahan urutan mempertahankan hubungan dengan orang yang sama. Kepala sekolah atau koordinator perlu diganti pada struktur sebelum profilnya dapat dihapus.
 
-Ringkasan guru pada beranda, direktori lengkap, mata pelajaran, dan struktur organisasi memiliki panel terpisah. Rekaman kepegawaian operasional `/admin/guru` tidak otomatis diterbitkan sebagai profil publik.
+Direktori dan struktur organisasi memakai satu daftar profil `people`. Panel **Guru di beranda** memilih referensi profil yang sama melalui `featured_people`; tidak menyimpan nama, jabatan, atau foto kedua. Nama dan foto sambutan beranda serta Tentang Kami mengikuti `people[structure.head]`. Rekaman kepegawaian operasional `/admin/guru` tetap tidak otomatis diterbitkan sebagai profil publik.
 
 | Field `content/teachers` | Penggunaan |
 | --- | --- |
-| `team[]` | Ringkasan guru pada beranda versi tablet; foto pertama juga dipakai untuk sambutan |
+| `featured_people[]` | Indeks profil yang dipilih untuk beranda; kepala sekolah dari `structure.head` otomatis tampil pertama tanpa duplikasi |
 | `people[]` | Profil publik: `name`, `role`, `group`, `description`, `portrait`, `photo` opsional |
 | `subjects[]` | Nama pelajaran, pengajar, dan penjelasan |
 | `structure.head` | Indeks kepala sekolah dalam `people` |
@@ -92,3 +92,7 @@ Landing, dari folder checkout landing:
 ```
 
 Tes dashboard memakai Firestore memori dengan HTTP eksternal diblokir; tes landing memakai database uji terisolasi. Pemeriksaan editor di browser mengintersepsi seluruh permintaan dan memakai HTML hasil render dari fixture memori. Screenshot berada di `storage/app/editor-browser-check/`.
+
+## Penyatuan profil website — 18 Oktober 2026
+
+Field lama `teachers.directory`, `teachers.team`, dan `home.principal_name` tidak digunakan lagi. Tautan editor lama `?block=other` membuka direktori. Gunakan `php artisan school:normalize-teachers` untuk meninjau perapian, lalu `php artisan school:normalize-teachers --apply` untuk menerapkan. Perintah mempertahankan `people` dan struktur yang ada, mengubah pilihan beranda menjadi referensi, serta merapikan `base`/`data` draf tanpa menerbitkannya. Dokumen asli dicadangkan di `storage/app/private/content-backups/`; pemeriksaan versi dan transaksi mencegah penimpaan perubahan yang terjadi selama migrasi. Cache landing dibersihkan dalam transaksi yang sama. Kode `TeacherDirectory`, `SchoolContent`, template beranda/Tentang Kami, dan komponen foto/tim landing harus diperbarui bersama dashboard.

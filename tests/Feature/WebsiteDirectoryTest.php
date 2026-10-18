@@ -10,14 +10,14 @@ use Tests\Support\CloudTestCase;
 
 class WebsiteDirectoryTest extends CloudTestCase
 {
-    public function test_directory_can_be_edited_without_changing_homepage_or_publishing_early(): void
+    public function test_directory_changes_keep_shared_references_without_publishing_early(): void
     {
         $content = app(WebsiteContent::class);
         $before = $this->store->get('content', 'teachers');
         $editor = $content->editor('teachers');
         $this->assertCount(30, $editor['data']['people']);
         $this->actingAs($this->admin())->get('/admin/website/teachers/edit')->assertOk()
-            ->assertSee('Ringkasan guru di beranda')->assertSee('Direktori Guru &amp; Staf', false)
+            ->assertSee('Guru di beranda')->assertSee('Direktori Guru &amp; Staf', false)
             ->assertSee('values[structure.head]', false)->assertDontSee('name="values[people.0.portrait]"', false);
         $this->post('/admin/website/teachers/edit', ['version'=>$editor['version'], 'values'=>[
             'people.0.name'=>'Nama kepala dari dashboard', 'people.0.group'=>'pimpinan',
@@ -27,13 +27,15 @@ class WebsiteDirectoryTest extends CloudTestCase
         $draft = $content->editor('teachers')['data'];
         $this->assertSame(1, $draft['structure']['head']);
         $this->assertFalse($draft['demo_profiles']);
-        $this->assertSame($before['team'], $draft['team']);
+        $this->assertSame($editor['data']['featured_people'], $draft['featured_people']);
+        $this->assertArrayNotHasKey('team', $draft);
         $this->get('/admin/website/preview/frame?page=teachers')->assertOk()->assertSee('Nama kepala dari dashboard')->assertSee('Tim pengajar baru');
         $content->publish();
         $saved = $this->store->get('content', 'teachers');
         TeacherDirectory::validate($saved);
         $this->assertSame('Nama kepala dari dashboard', $saved['people'][0]['name']);
-        $this->assertSame($before['team'], $saved['team']);
+        $this->assertSame($draft['featured_people'], $saved['featured_people']);
+        $this->assertArrayNotHasKey('team', $saved);
         $this->assertSame(1, $saved['structure']['head']);
     }
 

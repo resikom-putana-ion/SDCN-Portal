@@ -94,6 +94,9 @@ execFileSync(php,[path.join(__dirname,'render-editor-fixtures.php')],{cwd:root,s
         assert.equal(saves.length,3,'Changing pages saves pending changes');
         page.on('dialog',dialog=>dialog.accept());
         await page.goto('http://editor.test/admin/website/teachers/edit');
+        assert.equal(await page.locator('[name^="values[directory."],[name^="values[team."]').count(),0,'Profiles have one editable source');
+        await page.locator('[data-cms-select=team]').click();
+        assert.ok(await page.locator('select[name^="values[featured_people."]').count()>0,'Homepage uses directory selections');
         await page.locator('[data-cms-select=people]').click();
         await page.frameLocator('[data-cms-frame]').getByRole('button',{name:'Edit profil Ratna Puspitasari, M.Pd.',exact:true}).click();
         await page.locator('[data-cms-person-index="0"] > details[open]').waitFor();
