@@ -22,6 +22,70 @@ themeButtons.forEach(button=>button.addEventListener('click',()=>{
 }));
 refreshTheme();
 
+const notificationLink=document.querySelector('[data-notification-feed]');
+const notificationList=document.querySelector('[data-notification-list]');
+const notificationCount=document.querySelector('[data-notification-count]');
+const notificationChecked=document.querySelector('[data-notification-checked]');
+let notificationRefreshing=false;
+let lastNotificationSignature='';
+const renderNotifications=items=>{
+    if(!notificationList)return;
+    const signature=JSON.stringify(items);
+    if(signature===lastNotificationSignature)return;
+    lastNotificationSignature=signature;
+    if(items.length===0){
+        const empty=document.createElement('div');
+        empty.className='empty';
+        empty.textContent='Belum ada notifikasi baru atau tindakan yang perlu diperhatikan.';
+        notificationList.replaceChildren(empty);
+        return;
+    }
+    const fragment=document.createDocumentFragment();
+    items.forEach(item=>{
+        const hasLink=typeof item.href==='string'&&item.href.startsWith('/admin/');
+        const entry=document.createElement(hasLink?'a':'div');
+        entry.className='detail-line notification-item';
+        if(hasLink)entry.href=item.href;
+        const content=document.createElement('div');
+        const title=document.createElement('strong');
+        const description=document.createElement('small');
+        title.textContent=item.title||'Notifikasi sekolah';
+        description.textContent=[item.description,item.time].filter(Boolean).join(' · ');
+        content.append(title,description);
+        entry.append(content);
+        fragment.append(entry);
+    });
+    notificationList.replaceChildren(fragment);
+};
+const refreshNotifications=async()=>{
+    if(!notificationLink||notificationRefreshing)return;
+    notificationRefreshing=true;
+    try{
+        const response=await fetch(notificationLink.dataset.notificationFeed,{headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin'});
+        if(!response.ok)return;
+        const data=await response.json();
+        const items=Array.isArray(data.notifications)?data.notifications:[];
+        const count=Number(data.count)||items.length;
+        if(notificationCount){
+            notificationCount.hidden=count===0;
+            notificationCount.textContent=count>9?'9+':String(count);
+        }
+        notificationLink.setAttribute('aria-label',count?`Notifikasi, ${count} perlu perhatian`:'Notifikasi');
+        notificationLink.title=count?`${count} notifikasi perlu perhatian`:'Notifikasi';
+        renderNotifications(items);
+        if(notificationChecked){
+            const checkedAt=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+            notificationChecked.textContent=`Diperbarui dari Firebase pukul ${checkedAt}.`;
+        }
+    }catch{}
+    finally{notificationRefreshing=false}
+};
+if(notificationLink){
+    refreshNotifications();
+    window.setInterval(()=>{if(!document.hidden)refreshNotifications()},30000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshNotifications()});
+}
+
 const accountMenu=document.querySelector('[data-account-menu]');
 const accountSummary=accountMenu?.querySelector('summary');
 accountMenu?.addEventListener('toggle',()=>accountSummary.setAttribute('aria-expanded',String(accountMenu.open)));

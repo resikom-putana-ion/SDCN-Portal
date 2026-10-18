@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\StudentLifecycleController;
 use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\NotificationController;
 use App\Models\SchoolRecord;
 use App\Support\CloudData;
 use App\Support\SchoolAccess;
@@ -34,6 +35,10 @@ class SchoolRoleAccess
 
         if ($controller === AdminProfileController::class) {
             return in_array($method, ['save', 'photo'], true);
+        }
+
+        if ($controller === NotificationController::class) {
+            return $method === 'feed';
         }
 
         if ($controller === AdminController::class) {

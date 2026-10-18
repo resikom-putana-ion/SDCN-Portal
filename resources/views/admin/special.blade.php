@@ -1,13 +1,24 @@
 @extends($screen==='audit'?'layouts.audit':'layouts.app')
 @section('content')
 @if($screen==='bahasa')<x-card title="Pilih bahasa"><div class="language-options">@foreach(['id'=>'Indonesia','en'=>'English'] as $locale=>$label)<form method="post" action="/language">@csrf<input type="hidden" name="locale" value="{{ $locale }}"><button class="{{ session('locale','id')===$locale?'selected':'' }}"><span class="flag {{ $locale }}">@if($locale==='en')🇬🇧@endif</span>{{ $label }}</button></form>@endforeach</div><small class="muted">Pilih bahasa antarmuka. Nominal pembayaran tetap dalam Rupiah.</small></x-card>
-@elseif($screen==='notifikasi')@php
-$notifications=match(auth()->user()->role){
-    'keuangan'=>[['Pembayaran transfer menunggu verifikasi','Periksa nominal dan referensi pembayaran','pembayaran']],
-    'akademik'=>[['Absensi hari ini','Periksa pencatatan kehadiran siswa','absensi'],['Nilai & rapor','Periksa nilai yang siap diterbitkan','nilai']],
-    default=>[['Pendaftar baru: Raka Aditya','Periksa data dan berkas pendaftaran','pendaftar'],['Draf Hero telah disimpan','Tinjau sebelum publikasi','publikasi'],['Pembayaran transfer menunggu verifikasi','Alya Putri · SPP Oktober','pembayaran']],
-};
-@endphp<x-card title="Perlu perhatian">@foreach($notifications as [$name,$desc,$link])<a class="detail-line" href="/admin/{{ $link }}"><x-icon name="file"/><div><strong>{{ $name }}</strong><small>{{ $desc }}</small></div></a>@endforeach</x-card>
+@elseif($screen==='notifikasi')
+<x-card title="Notifikasi terbaru">
+    <div class="notification-feed" data-notification-list aria-live="polite" aria-relevant="additions text">
+        @forelse($notifications as $notification)
+            @if($notification['href'])
+                <a class="detail-line notification-item" href="{{ $notification['href'] }}">
+            @else
+                <div class="detail-line notification-item">
+            @endif
+                    <x-icon name="file"/>
+                    <div><strong>{{ $notification['title'] }}</strong><small>{{ $notification['description'] }} · {{ $notification['time'] }}</small></div>
+            @if($notification['href'])</a>@else</div>@endif
+        @empty
+            <div class="empty">Belum ada notifikasi baru atau tindakan yang perlu diperhatikan.</div>
+        @endforelse
+    </div>
+    <p class="notification-refresh-note" data-notification-checked>Notifikasi diperbarui otomatis saat ada data baru di Firebase.</p>
+</x-card>
 @elseif($screen==='laporan')@php
 $reportDefinitions=[
     'students'=>['Laporan siswa & kelas','Siswa aktif, pindah, lulus; penempatan kelas'],

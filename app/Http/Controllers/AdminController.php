@@ -63,6 +63,11 @@ class AdminController extends Controller
         if ($screen === 'pembayaran') {
             return view('admin.payments', $shared);
         }
+        if ($screen === 'notifikasi') {
+            $shared['notifications'] = app(\App\Services\SchoolNotificationFeed::class)->forUser($request->user());
+
+            return view('admin.special', $shared);
+        }
         if (in_array($screen, ['website', 'halaman', 'media', 'publikasi', 'terbit'])) {
             return view('website.manage', $shared);
         }

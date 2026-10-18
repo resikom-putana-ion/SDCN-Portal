@@ -6,6 +6,7 @@ use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\StudentLifecycleController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Middleware\SchoolAdmin;
 use App\Http\Middleware\SchoolRoleAccess;
 use Illuminate\Http\Request;
@@ -51,6 +52,7 @@ Route::middleware(['auth', \App\Http\Middleware\FirebaseSession::class, SchoolAd
     Route::post('/profil-admin', [\App\Http\Controllers\AdminProfileController::class, 'save']);
     Route::get('/foto-admin', [\App\Http\Controllers\AdminProfileController::class, 'photo']);
     Route::get('/export/{kind}', [AdminController::class, 'export']);
+    Route::get('/notifikasi/feed', [NotificationController::class, 'feed']);
     Route::get('/dokumen/{id}', [WorkflowController::class, 'document']);
     Route::post('/dokumen/{record}', [WorkflowController::class, 'uploadDocument']);
     Route::get('/identitas/{record}', [WorkflowController::class, 'identity']);

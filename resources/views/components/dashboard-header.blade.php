@@ -8,7 +8,7 @@
         </form>
         <div class="header-year"><span>{{ __('Tahun ajaran') }}</span><strong data-header-year>{{ $schoolYear }}</strong></div>
         <span class="header-divider" aria-hidden="true"></span>
-        <a href="/admin/notifikasi" class="header-icon-button header-notifications" aria-label="{{ __('Notifikasi') }}" title="{{ __('Notifikasi') }}"><x-icon name="bell"/></a>
+        <a href="/admin/notifikasi" class="header-icon-button header-notifications" data-notification-feed="/admin/notifikasi/feed" aria-label="{{ __('Notifikasi') }}" title="{{ __('Notifikasi') }}"><x-icon name="bell"/><span class="notification-count" data-notification-count hidden></span></a>
         <details class="header-account" data-account-menu>
             <summary aria-label="{{ __('Menu akun') }}: {{ auth()->user()->name }}" aria-controls="header-account-options" aria-expanded="false">
                 <x-admin-avatar/>
