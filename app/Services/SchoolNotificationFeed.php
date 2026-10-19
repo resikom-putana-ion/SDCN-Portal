@@ -4,16 +4,33 @@ namespace App\Services;
 
 use App\Models\SchoolRecord;
 use App\Models\User;
-use App\Support\CloudData;
 use App\Support\School;
 use App\Support\SchoolAccess;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class SchoolNotificationFeed
 {
+    public const CATEGORIES = ['pendaftaran' => 'Pendaftaran', 'tagihan' => 'Tagihan',
+        'pembayaran' => 'Pembayaran', 'kas' => 'Kas', 'akademik' => 'Akademik',
+        'website' => 'Website', 'pengaturan' => 'Pengaturan', 'lainnya' => 'Lainnya'];
+
+    public function cachedForUser(User $user): Collection
+    {
+        $key = 'notifications:v1:'.hash('sha256', json_encode([
+            config('school.firebase_project'), config('school.firebase_database'),
+            (string) $user->role, SchoolAccess::hasFullAccess($user),
+        ]));
+        // Keep this cache local so reading it never needs a Firestore round trip.
+        return Cache::store(app()->runningUnitTests() ? 'array' : 'file')
+            ->remember($key, 20, fn () => $this->forUser($user));
+    }
+
     public function forUser(User $user): Collection
     {
+        $records = new NotificationRecords;
+        $recent = $records->records([['created_at', 'GREATER_THAN_OR_EQUAL', now()->subDays(7)->toIso8601String()]]);
         $notifications = collect();
         $pendingPaymentEvents = [];
         $fullAccess = SchoolAccess::hasFullAccess($user);
@@ -21,7 +38,7 @@ class SchoolNotificationFeed
 
         // Admission documents are also written directly by the connected landing page.
         // Keep the alert generic for roles that cannot open private applicant profiles.
-        foreach (SchoolRecord::ofKind('applicants')->get() as $applicant) {
+        foreach ($records->applicants() as $applicant) {
             $status = (string) $applicant->value('status');
             if (! in_array($status, ['Pemeriksaan', 'Perlu perbaikan', 'Lolos administrasi', 'Menunggu daftar ulang', 'Siap diaktifkan'], true)) {
                 continue;
@@ -42,14 +59,13 @@ class SchoolNotificationFeed
         }
 
         if ($fullAccess || $role === 'keuangan') {
-            $invoices = SchoolRecord::ofKind('invoices')->get()->keyBy(fn (SchoolRecord $invoice) => (string) $invoice->id);
-            $verifiedPayments = CloudData::table('school_payments')->where('status', 'Terverifikasi')->get();
-            $paidByInvoice = $verifiedPayments->groupBy(fn ($payment) => (string) $payment->invoice_id)
-                ->map(fn (Collection $payments) => (int) $payments->sum('amount'));
+            $invoices = $records->records([['data.due_date', 'LESS_THAN_OR_EQUAL', now()->addDays(7)->toDateString()]])
+                ->where('kind', 'invoices')->keyBy(fn (SchoolRecord $invoice) => (string) $invoice->id);
+            $paidByInvoice = $records->paidByInvoice($invoices);
 
-            foreach (CloudData::table('school_payments')->where('status', 'Menunggu')->get() as $payment) {
+            foreach ($records->payments([['status', 'EQUAL', 'Menunggu']]) as $payment) {
                 $pendingPaymentEvents[] = 'Mencatat pembayaran '.$payment->reference;
-                $invoice = $invoices->get((string) $payment->invoice_id);
+                $invoice = $invoices->get((string) $payment->invoice_id) ?? $records->find($payment->invoice_id, 'invoices');
                 $invoiceName = $invoice?->value('name', 'Tagihan sekolah') ?? 'Tagihan sekolah';
                 $description = $payment->reference.' · '.$invoiceName.' · '.School::money($payment->amount);
                 $this->push($notifications, 'payment-'.$payment->id, 'Transfer menunggu verifikasi', $description,
@@ -86,7 +102,7 @@ class SchoolNotificationFeed
                     '/admin/pembayaran?invoice='.$invoice->id, $dueDate, $priority);
             }
 
-            foreach (SchoolRecord::ofKind('transactions')->get() as $transaction) {
+            foreach ($recent->where('kind', 'transactions') as $transaction) {
                 if (! $this->isRecent($transaction->created_at)) continue;
                 $description = $transaction->value('type').' · '.School::money($transaction->value('amount', 0));
                 $this->push($notifications, 'transaction-'.$transaction->id, 'Transaksi kas baru', $description,
@@ -95,30 +111,30 @@ class SchoolNotificationFeed
         }
 
         if ($fullAccess || $role === 'akademik') {
-            foreach (SchoolRecord::ofKind('students')->get() as $student) {
+            foreach ($recent->where('kind', 'students') as $student) {
                 if (! $this->isRecent($student->created_at)) continue;
                 $description = $student->code.' · Kelas '.$student->value('class', 'belum ditempatkan');
                 $this->push($notifications, 'student-'.$student->id, 'Siswa baru tercatat', $description,
                     '/admin/siswa/'.$student->id, $student->created_at, 2);
             }
 
-            foreach (SchoolRecord::ofKind('grades')->where('data->status', 'Pemeriksaan')->get() as $grade) {
-                $student = SchoolRecord::ofKind('students')->find($grade->value('student_id'));
+            foreach ($records->records([['kind', 'EQUAL', 'grades'], ['data.status', 'EQUAL', 'Pemeriksaan']]) as $grade) {
+                $student = $records->find($grade->value('student_id'), 'students');
                 $studentName = $student?->value('name', 'Siswa') ?? 'Siswa';
                 $description = $studentName.' · '.$grade->value('subject').' · '.$grade->value('semester');
                 $this->push($notifications, 'grade-'.$grade->id, 'Nilai menunggu pemeriksaan', $description,
                     '/admin/nilai/'.$grade->id, $grade->created_at, 3);
             }
 
-            foreach (SchoolRecord::ofKind('attendance')->where('data->date', now()->toDateString())->where('data->status', 'Alpa')->get() as $attendance) {
-                $student = SchoolRecord::ofKind('students')->find($attendance->value('student_id'));
+            foreach ($records->records([['data.date', 'EQUAL', now()->toDateString()]])->where('kind', 'attendance')->filter(fn ($row) => $row->value('status') === 'Alpa') as $attendance) {
+                $student = $records->find($attendance->value('student_id'), 'students');
                 $description = ($student?->value('name', 'Siswa') ?? 'Siswa').' · '.School::date($attendance->value('date'));
                 $this->push($notifications, 'attendance-'.$attendance->id, 'Absensi tanpa keterangan hari ini', $description,
                     '/admin/absensi/'.$attendance->id, $attendance->created_at ?? $attendance->value('date'), 3);
             }
         }
 
-        foreach (SchoolRecord::ofKind('activities')->get() as $activity) {
+        foreach ($recent->where('kind', 'activities') as $activity) {
             if (! $this->isRecent($activity->created_at)) continue;
             $section = mb_strtolower(trim((string) $activity->value('section')));
             $name = (string) $activity->value('name');
@@ -169,7 +185,13 @@ class SchoolNotificationFeed
             }
 
             $this->push($notifications, 'activity-'.$activity->id, $title, $description,
-                $destination, $activity->created_at, 1);
+                $destination, $activity->created_at, 1, match ($section) {
+                    'ppdb', 'penerimaan siswa' => 'pendaftaran',
+                    'invoices' => 'tagihan', 'pembayaran' => 'pembayaran', 'transactions' => 'kas',
+                    'akademik', 'siswa', 'dokumen', 'classes', 'staff' => 'akademik',
+                    'website' => 'website', 'users', 'settings', 'period', 'pengaturan' => 'pengaturan',
+                    default => 'lainnya',
+                });
         }
 
         return $notifications->sort(function (array $left, array $right) {
@@ -177,7 +199,7 @@ class SchoolNotificationFeed
         })->take(100)->values()->map(fn (array $item) => collect($item)->except(['priority', 'sort_at'])->all());
     }
 
-    private function push(Collection $notifications, string $id, string $title, string $description, ?string $href, mixed $date, int $priority): void
+    private function push(Collection $notifications, string $id, string $title, string $description, ?string $href, mixed $date, int $priority, ?string $category = null): void
     {
         try {
             $timestamp = $date ? Carbon::parse($date) : now();
@@ -187,6 +209,10 @@ class SchoolNotificationFeed
 
         $notifications->push([
             'id' => $id,
+            'category' => $category ?? match (strstr($id, '-', true)) {
+                'applicant' => 'pendaftaran', 'invoice' => 'tagihan', 'payment' => 'pembayaran',
+                'transaction' => 'kas', 'student', 'grade', 'attendance' => 'akademik', default => 'lainnya',
+            },
             'title' => $title,
             'description' => $description,
             'href' => $href,

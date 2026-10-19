@@ -7,6 +7,26 @@ use App\Services\FirestoreDocumentStore;
 class MemoryFirestore extends FirestoreDocumentStore
 {
     public array $documents = [];
+    public array $queries = [];
+    public int $collectionReads = 0;
+    public function query(string $collection, array $filters): array
+    {
+        $this->queries[] = [$collection, $filters];
+        return array_values(array_filter($this->documents[$collection] ?? [], function ($row) use ($filters) {
+            foreach ($filters as [$field, $operator, $value]) {
+                if (!\Illuminate\Support\Arr::has($row, $field)) return false;
+                $actual = data_get($row, $field);
+                if (!match ($operator) {
+                    'EQUAL' => $actual == $value, 'NOT_EQUAL' => $actual != $value,
+                    'IN' => in_array($actual, $value),
+                    'GREATER_THAN_OR_EQUAL' => $actual >= $value,
+                    'LESS_THAN_OR_EQUAL' => $actual <= $value,
+                    default => throw new \InvalidArgumentException($operator),
+                }) return false;
+            }
+            return true;
+        }));
+    }
     private bool $active = false;
     private array $versions = [];
     public function inTransaction(): bool { return $this->active; }
@@ -30,7 +50,7 @@ class MemoryFirestore extends FirestoreDocumentStore
         $this->put($collection, $id, $data); return true;
     }
     public function delete(string $collection, string $id): void { unset($this->documents[$collection][$id], $this->versions[$collection][$id]); }
-    public function all(string $collection): array { return array_values($this->documents[$collection] ?? []); }
+    public function all(string $collection): array { $this->collectionReads++; return array_values($this->documents[$collection] ?? []); }
     public function page(string $collection, ?string $cursor = null, int $limit = 25): array
     {
         $items = $this->all($collection); $start = (int) $cursor;

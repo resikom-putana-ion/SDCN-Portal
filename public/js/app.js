@@ -28,6 +28,36 @@ const notificationCount=document.querySelector('[data-notification-count]');
 const notificationChecked=document.querySelector('[data-notification-checked]');
 let notificationRefreshing=false;
 let lastNotificationSignature='';
+let selectedNotificationCategory='semua';
+const notificationFilters=[...document.querySelectorAll('[data-notification-filter]')];
+const applyNotificationFilter=()=>{
+    if(!notificationList)return;
+    let visibleCount=0;
+    const counts=new Map();
+    notificationList.querySelectorAll('[data-notification-category]').forEach(group=>{
+        const category=group.dataset.notificationCategory;
+        const count=group.querySelectorAll('.notification-item').length;
+        counts.set(category,count);
+        group.hidden=selectedNotificationCategory!=='semua'&&selectedNotificationCategory!==category;
+        if(!group.hidden)visibleCount+=count;
+    });
+    notificationFilters.forEach(button=>{
+        const category=button.dataset.notificationFilter;
+        const active=category===selectedNotificationCategory;
+        button.classList.toggle('active',active);
+        button.setAttribute('aria-pressed',String(active));
+        const badge=button.querySelector('[data-notification-tab-count]');
+        if(badge)badge.textContent=String(category==='semua'?notificationList.querySelectorAll('.notification-item').length:counts.get(category)||0);
+    });
+    const empty=document.querySelector('[data-notification-category-empty]');
+    if(empty)empty.hidden=selectedNotificationCategory==='semua'||visibleCount>0;
+    notificationList.querySelectorAll('.empty').forEach(empty=>{empty.hidden=selectedNotificationCategory!=='semua'});
+};
+notificationFilters.forEach(button=>button.addEventListener('click',()=>{
+    selectedNotificationCategory=button.dataset.notificationFilter;
+    applyNotificationFilter();
+}));
+applyNotificationFilter();
 const renderNotifications=items=>{
     if(!notificationList)return;
     const signature=JSON.stringify(items);
@@ -38,9 +68,30 @@ const renderNotifications=items=>{
         empty.className='empty';
         empty.textContent='Belum ada notifikasi baru atau tindakan yang perlu diperhatikan.';
         notificationList.replaceChildren(empty);
+        applyNotificationFilter();
         return;
     }
     const fragment=document.createDocumentFragment();
+    const groups=new Map();
+    const categories=JSON.parse(notificationList.dataset.notificationCategories||'{}');
+    Object.entries(categories).forEach(([category,label])=>{
+        const count=items.filter(item=>(item.category||'lainnya')===category).length;
+        if(!count)return;
+        const section=document.createElement('section');
+        section.className='notification-group';
+        section.dataset.notificationCategory=category;
+        section.setAttribute('aria-labelledby',`notification-${category}`);
+        const heading=document.createElement('h3');
+        heading.id=`notification-${category}`;
+        heading.textContent=label+' ';
+        const badge=document.createElement('span');
+        badge.className='badge';
+        badge.textContent=String(count);
+        heading.append(badge);
+        section.append(heading);
+        groups.set(category,section);
+        fragment.append(section);
+    });
     items.forEach(item=>{
         const hasLink=typeof item.href==='string'&&item.href.startsWith('/admin/');
         const entry=document.createElement(hasLink?'a':'div');
@@ -53,9 +104,10 @@ const renderNotifications=items=>{
         description.textContent=[item.description,item.time].filter(Boolean).join(' · ');
         content.append(title,description);
         entry.append(content);
-        fragment.append(entry);
+        (groups.get(item.category||'lainnya')||fragment).append(entry);
     });
     notificationList.replaceChildren(fragment);
+    applyNotificationFilter();
 };
 const refreshNotifications=async()=>{
     if(!notificationLink||notificationRefreshing)return;
@@ -75,13 +127,19 @@ const refreshNotifications=async()=>{
         renderNotifications(items);
         if(notificationChecked){
             const checkedAt=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-            notificationChecked.textContent=`Diperbarui dari Firebase pukul ${checkedAt}.`;
+            notificationChecked.textContent=`Menampilkan hingga 100 notifikasi prioritas. Diperbarui pukul ${checkedAt}; diperiksa setiap 30 detik.`;
         }
     }catch{}
     finally{notificationRefreshing=false}
 };
 if(notificationLink){
-    refreshNotifications();
+    if(notificationList&&notificationCount){
+        const count=notificationList.querySelectorAll('.notification-item').length;
+        notificationCount.hidden=count===0;
+        notificationCount.textContent=count>9?'9+':String(count);
+        notificationLink.setAttribute('aria-label',count?`Notifikasi, ${count} perlu perhatian`:'Notifikasi');
+    }
+    if(!notificationList)refreshNotifications();
     window.setInterval(()=>{if(!document.hidden)refreshNotifications()},30000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshNotifications()});
 }

@@ -9,7 +9,7 @@ class NotificationController extends Controller
 {
     public function feed(Request $request, SchoolNotificationFeed $feed)
     {
-        $notifications = $feed->forUser($request->user());
+        $notifications = $feed->cachedForUser($request->user());
 
         return response()->json([
             'notifications' => $notifications,

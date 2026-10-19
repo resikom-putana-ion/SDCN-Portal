@@ -64,7 +64,7 @@ class AdminController extends Controller
             return view('admin.payments', $shared);
         }
         if ($screen === 'notifikasi') {
-            $shared['notifications'] = app(\App\Services\SchoolNotificationFeed::class)->forUser($request->user());
+            $shared['notifications'] = app(\App\Services\SchoolNotificationFeed::class)->cachedForUser($request->user());
 
             return view('admin.special', $shared);
         }

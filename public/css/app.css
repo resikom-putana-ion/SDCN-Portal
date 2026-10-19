@@ -59,6 +59,14 @@ body.dark .page-back a{color:var(--text)}
 .notification-item:hover{background:var(--bg)}
 .notification-item .icon{flex-shrink:0;margin-top:2px}
 .notification-refresh-note{margin:16px 0 0;color:var(--muted);font-size:11px}
+.notification-group{margin-top:24px;display:grid;gap:10px}
+.notification-group h3{display:flex;align-items:center;gap:10px;font-size:14px}
+.notification-group h3 .badge{font-size:11px;min-width:26px;text-align:center}
+.notification-group .notification-item{margin:0;color:var(--text)}
+.notification-tabs{gap:20px;overflow-x:auto;margin:0 0 20px;padding-bottom:4px;max-width:100%}
+.notification-tabs button{flex-shrink:0;white-space:nowrap}
+.notification-tabs .badge{font-size:10px;padding:2px 7px}
+.notification-group[hidden],[data-notification-category-empty][hidden],.notification-feed .empty[hidden]{display:none}
 .header-search-shell{padding:3px;background:var(--bg);border-radius:13px;flex:1;max-width:370px;min-width:140px}
 .header-search{display:flex;align-items:center;gap:9px;height:36px;background:var(--header-input);border-radius:10px;padding:0 10px;color:var(--muted)}
 .header-search .icon{width:19px;height:19px}

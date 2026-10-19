@@ -69,6 +69,22 @@ class FirestoreDocumentStore implements DocumentStore
         }
         return array_values($items);
     }
+    /** Execute indexed filters on Firestore instead of downloading a collection. */
+    public function query(string $collection, array $filters): array
+    {
+        $conditions = array_map(fn ($filter) => ['fieldFilter' => [
+            'field' => ['fieldPath' => $filter[0]], 'op' => $filter[1], 'value' => self::encode($filter[2]),
+        ]], $filters);
+        $query = ['from' => [['collectionId' => $collection]]];
+        if ($conditions) $query['where'] = count($conditions) === 1 ? $conditions[0]
+            : ['compositeFilter' => ['op' => 'AND', 'filters' => $conditions]];
+        $payload = ['structuredQuery' => $query];
+        if ($this->transactionId) $payload['transaction'] = $this->transactionId;
+        $result = $this->client()->post($this->endpoint().':runQuery', $payload)->throw()->json();
+        return array_values(array_map(fn ($row) => $this->document($row['document']),
+            array_filter($result, fn ($row) => isset($row['document']))));
+    }
+
     private function endpoint(): string
     {
         return 'https://firestore.googleapis.com/v1/projects/'.rawurlencode(config('school.firebase_project')).'/databases/'.rawurlencode(config('school.firebase_database')).'/documents';
