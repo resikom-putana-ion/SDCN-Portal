@@ -10,6 +10,41 @@ use Tests\Support\CloudTestCase;
 
 class AdmissionPaymentTest extends CloudTestCase
 {
+    public function test_applicant_document_preview_is_private_and_displayed_inline(): void
+    {
+        $this->application();
+        $doc = CloudData::table('school_documents')->where('record_id', 'NEW')->first();
+        $url = '/admin/dokumen/'.$doc->id.'?preview=1';
+        $this->get($url)->assertRedirect('/login');
+        $this->actingAs($this->admin())->get('/admin/pendaftar/NEW')
+            ->assertOk()->assertSee($url, false)->assertDontSee('Unduh');
+        $response = $this->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('inline;', $response->headers->get('Content-Disposition'));
+        $this->assertSame('%PDF-1.4 proof', $response->streamedContent());
+    }
+
+    public function test_legacy_landing_proof_is_downloadable_and_not_duplicated_after_sync(): void
+    {
+        $this->application();
+        $row = $this->store->get('applications', 'NEW');
+        $proof = $row['documents']['payment_proof'];
+        unset($row['payment_method'], $row['documents']['payment_proof']);
+        $row['payment'] = ['method'=>'transfer','amount'=>350000,'proof'=>$proof];
+        $this->store->put('applications','NEW',$row);
+        CloudData::clear();
+        $this->actingAs($this->admin())->get('/admin/pendaftar/NEW')->assertOk()->assertSee('Pratinjau bukti transfer');
+        $doc = CloudData::table('school_documents')->where('record_id','NEW')->first();
+        $this->get('/admin/dokumen/'.$doc->id)->assertDownload('Bukti transfer.pdf');
+        $this->assertSame(350000,SchoolRecord::findOrFail('NEW')->value('payment_amount'));
+        $row['documents']['payment_proof'] = $proof;
+        $this->store->put('applications','NEW',$row);
+        CloudData::clear();
+        $this->assertCount(1,CloudData::table('school_documents')->where('record_id','NEW')->get());
+        $this->post('/admin/ppdb/NEW/offline',['checks'=>['family','birth','family_card','photo'],'paid'=>1,
+            'amount'=>350000,'class'=>'1A','action'=>'activate'])->assertSessionHasNoErrors();
+        $this->assertSame(350000,CloudData::table('school_payments')->where('reference','KW-NEW')->first()->amount);
+    }
+
     private function application(?string $method = 'transfer'): void
     {
         app(FirestoreFileStorage::class)->put('applications/NEW/proof.pdf', '%PDF-1.4 proof', 'application/pdf');
@@ -27,7 +62,7 @@ class AdmissionPaymentTest extends CloudTestCase
         $this->application();
         $doc = CloudData::table('school_documents')->where('record_id', 'NEW')->first();
         $this->get('/admin/dokumen/'.$doc->id)->assertRedirect('/login');
-        $this->actingAs($this->admin())->get('/admin/pendaftar/NEW')->assertOk()->assertSee('Online · Transfer rekening')->assertSee('Unduh bukti transfer');
+        $this->actingAs($this->admin())->get('/admin/pendaftar/NEW')->assertOk()->assertSee('Online · Transfer rekening')->assertSee('Pratinjau bukti transfer');
         $this->get('/admin/dokumen/'.$doc->id)->assertDownload('Bukti transfer.pdf');
         $this->post('/admin/ppdb/NEW/offline', ['checks' => ['family', 'birth', 'family_card', 'photo'], 'paid' => 1,
             'amount' => 250000, 'method' => 'Tunai di sekolah', 'class' => '1A', 'action' => 'activate'])->assertSessionHasNoErrors();

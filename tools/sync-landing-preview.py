@@ -27,14 +27,20 @@ for source, target in sources:
     text = text.replace('/assets/', '/landing-preview/assets/').replace('/css/', '/landing-preview/css/').replace('/js/', '/landing-preview/js/')
     text = text.replace('/landing-preview/assets/fonts/Poppins-', '/assets/Poppins-')
     text = text.replace('/assets/Poppins-Bold.ttf', '/landing-preview/assets/fonts/Poppins-Bold.ttf')
+    # Uploaded images in an unsaved preview are server-validated data URLs.
+    # Public components accept local paths only; the private preview also accepts
+    # these raster data URLs and the remapped bundled asset paths.
+    if target.name in ['person-photo.blade.php', 'staff-portrait.blade.php']:
+        text = text.replace("preg_match('#^/(?:assets/(?:design|team)|media)/[a-zA-Z0-9_-]+\\.(png|jpe?g|webp)$#', $photo)",
+                            "\\App\\Services\\LandingPreview::validPhoto($photo)")
     if target == dest / 'layout.blade.php':
         text = text.replace('</body>', '<script type="application/json" id="preview-blocks">{!! json_encode($previewBlocks, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>\n<script src="/js/website-preview.js" defer></script>\n<link rel="stylesheet" href="/css/website-preview.css">\n</body>')
     target.write_text(text, encoding='utf-8')
 
 assets = root / 'public/landing-preview'
 for category, names in {
-    'css':['site.css','hero-motion.css','announcement.css','team-directory.css','registration.css'],
-    'js':['site.js','team-directory.js'],
+    'css':['site.css','appearance.css','hero-motion.css','announcement.css','team-directory.css','registration.css'],
+    'js':['site.js','language.js','team-directory.js'],
 }.items():
     (assets / category).mkdir(parents=True, exist_ok=True)
     for name in names:

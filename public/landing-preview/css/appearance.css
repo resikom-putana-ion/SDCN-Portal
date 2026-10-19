@@ -1,0 +1,180 @@
+.site-preferences {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.preference-button {
+    display: inline-grid;
+    min-width: 39px;
+    height: 39px;
+    place-items: center;
+    padding: 0 9px;
+    border: 1px solid #d7e5eb;
+    border-radius: 12px;
+    background: #f7fbfd;
+    color: #123a5a;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.preference-button:hover,
+.preference-button:focus-visible {
+    border-color: #72b9ca;
+    outline: 3px solid #72b9ca33;
+}
+
+.language-toggle {
+    min-width: 43px;
+}
+
+@media (min-width: 1001px) {
+    .header-inner { gap: 16px; }
+    .site-header nav { gap: clamp(12px, 1.35vw, 22px); }
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --navy: #e2edf5;
+    --blue: #71c8e4;
+    --muted: #a5b7c5;
+    --border: #34495b;
+    --light: #26394a;
+    --pale: #172635;
+}
+
+html[data-theme="dark"] body {
+    background: #111d29;
+    color: #d8e3eb;
+}
+
+html[data-theme="dark"] .site-header,
+html[data-theme="dark"] .site-header nav,
+html[data-theme="dark"] .site-footer,
+html[data-theme="dark"] .info-card,
+html[data-theme="dark"] .program-card,
+html[data-theme="dark"] .team-card,
+html[data-theme="dark"] .testimonial,
+html[data-theme="dark"] .principal-card,
+html[data-theme="dark"] .faq-grid details,
+html[data-theme="dark"] .story-copy,
+html[data-theme="dark"] .quote-card,
+html[data-theme="dark"] .contact-grid .info-card,
+html[data-theme="dark"] .visit-form,
+html[data-theme="dark"] .review-block,
+html[data-theme="dark"] .registration-form-card,
+html[data-theme="dark"] .registration-number,
+html[data-theme="dark"] .organization-head,
+html[data-theme="dark"] .organization-branch,
+html[data-theme="dark"] .subject-card,
+html[data-theme="dark"] .people-help,
+html[data-theme="dark"] .people-empty,
+html[data-theme="dark"] .person-card,
+html[data-theme="dark"] .people-photo-note {
+    background-color: #1b2b3a;
+    color: #d8e3eb;
+    border-color: #34495b;
+}
+
+html[data-theme="dark"] .site-header {
+    box-shadow: 0 4px 18px #0005;
+}
+
+html[data-theme="dark"] .tinted,
+html[data-theme="dark"] .hero,
+html[data-theme="dark"] .people-hero,
+html[data-theme="dark"] .cta,
+html[data-theme="dark"] .home-cta,
+html[data-theme="dark"] .success-header,
+html[data-theme="dark"] .registration-banner {
+    background-color: #182a39;
+    background-image: linear-gradient(125deg, #1b2d3b, #172635 70%, #183242);
+    color: #e2edf5;
+}
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] .brand,
+html[data-theme="dark"] .site-header nav a,
+html[data-theme="dark"] .section-heading h2,
+html[data-theme="dark"] .hero h1,
+html[data-theme="dark"] .people-hero h1,
+html[data-theme="dark"] .registration-banner h1,
+html[data-theme="dark"] .review-block dt,
+html[data-theme="dark"] .person-copy h3 {
+    color: #e4eef5;
+}
+
+html[data-theme="dark"] p,
+html[data-theme="dark"] li,
+html[data-theme="dark"] dd,
+html[data-theme="dark"] .hero-description,
+html[data-theme="dark"] .section-heading>p:last-child,
+html[data-theme="dark"] .people-hero>div>p:not(.eyebrow),
+html[data-theme="dark"] .footer-contact,
+html[data-theme="dark"] .footer-brand p,
+html[data-theme="dark"] .review-block,
+html[data-theme="dark"] .registration-form-heading p {
+    color: #b5c5d1;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .people-search input,
+html[data-theme="dark"] .people-filters button {
+    border-color: #405568;
+    background-color: #142330;
+    color: #e0eaf1;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: #91a6b5;
+}
+
+html[data-theme="dark"] .preference-button {
+    border-color: #405568;
+    background: #203445;
+    color: #f1d477;
+}
+
+html[data-theme="dark"] .admission-steps article,
+html[data-theme="dark"] .advantage-card,
+html[data-theme="dark"] .map-illustration,
+html[data-theme="dark"] .registration-group-card,
+html[data-theme="dark"] .payment-option,
+html[data-theme="dark"] .payment-proof-panel,
+html[data-theme="dark"] .upload-dropzone {
+    border-color: #3b5263;
+    background-color: #1d3040;
+    color: #dce7ee;
+}
+
+html[data-theme="dark"] .hero-image figcaption,
+html[data-theme="dark"] .site-header nav a[aria-current],
+html[data-theme="dark"] .people-filters button.is-active {
+    color: #e5f4fa;
+}
+
+@media (max-width: 1000px) {
+    .header-inner { gap: 8px; }
+    .site-preferences { gap: 5px; }
+    .preference-button { min-width: 35px; height: 35px; }
+}
+
+@media (max-width: 600px) {
+    .header-inner { gap: 5px; }
+    .site-preferences { gap: 4px; }
+    .preference-button { min-width: 31px; height: 33px; padding-inline: 6px; border-radius: 9px; font-size: 10px; }
+    .language-toggle { min-width: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; }
+}

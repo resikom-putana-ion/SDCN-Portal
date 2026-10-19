@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{ $site['home']['description'] }}">
@@ -8,27 +8,35 @@
     <link rel="icon" href="{{ $site['settings']['logo'] }}" type="image/png">
     <link rel="preload" href="/assets/Poppins-Regular.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="/landing-preview/css/site.css">
+    <link rel="stylesheet" href="/landing-preview/css/appearance.css">
     <link rel="stylesheet" href="/landing-preview/css/hero-motion.css">
     <link rel="stylesheet" href="/landing-preview/css/announcement.css">
     @if(($page ?? '') === 'teachers')<link rel="stylesheet" href="/landing-preview/css/team-directory.css">@endif
     @if(($page ?? '') === 'registration')<link rel="stylesheet" href="/landing-preview/css/registration.css">@endif
+    <script>try{document.documentElement.dataset.theme=localStorage.getItem('scn-theme')||'light'}catch(e){}</script>
+    <script src="/landing-preview/js/language.js" defer></script>
     <script src="/landing-preview/js/site.js" defer></script>
 </head>
 <body class="page-{{ $page ?? 'registration' }}">
 <a class="skip-link" href="#main">Lewati ke konten</a>
 <header class="site-header">
     <div class="header-inner">
-        <a class="brand" href="{{ \App\Services\LandingPreview::url('home') }}" aria-label="SD Ceria Nusantara, beranda">
+        <a class="brand" href="{{ \App\Services\LandingPreview::url('home') }}" aria-label="{{ $site['settings']['school_name'] }}, beranda">
             <span class="brand-emblem" aria-hidden="true">
                 <img src="{{ $site['settings']['logo'] }}" alt="" width="62" height="62">
             </span>
-            <span>SD CERIA<small>NUSANTARA</small></span>
+            @php($brandWords = preg_split('/\s+/', trim($site['settings']['school_name'])))
+            <span>{{ implode(' ', array_slice($brandWords, 0, 2)) }}@if(count($brandWords)>2)<small>{{ implode(' ', array_slice($brandWords, 2)) }}</small>@endif</span>
         </a>
         <nav id="navigation" aria-label="Navigasi utama">
             @foreach(['home'=>'Beranda','about'=>'Tentang Kami','program'=>'Program','facilities'=>'Fasilitas','teachers'=>'Guru & Staf','gallery'=>'Galeri','contact'=>'Kontak','announcement'=>'Pengumuman'] as $key=>$label)
             <a href="{{ \App\Services\LandingPreview::url($key) }}" @if(($page ?? '') === $key) aria-current="page" @endif>{{ $label }}</a>
             @endforeach
         </nav>
+        <div class="site-preferences" aria-label="Pengaturan tampilan">
+            <button class="preference-button" type="button" data-theme-toggle aria-label="Aktifkan mode gelap" title="Mode gelap"><span aria-hidden="true">☾</span></button>
+            <button class="preference-button language-toggle" type="button" data-language-toggle aria-label="Switch to English" title="English">EN</button>
+        </div>
         <a class="button small" href="{{ \App\Services\LandingPreview::url('registration', 1) }}">Daftar Sekarang</a>
         <button class="menu-toggle" aria-controls="navigation" aria-expanded="false" aria-label="Buka menu"><span></span><span></span><span></span></button>
     </div>
@@ -38,7 +46,7 @@
     @unless(isset($hideCta))
     <section class="cta outer {{ ($page ?? '') === 'home' ? 'home-cta' : '' }}">
         <div>@if(($page ?? '') === 'home')<p class="eyebrow">SIAP BERKENALAN DENGAN KAMI?</p>@endif
-        <h2>{{ ($page ?? '') === 'home' ? 'Mari mulai langkah pertama bersama.' : 'Siap mengenal SD Ceria Nusantara lebih dekat?' }}</h2>
+        <h2>{{ ($page ?? '') === 'home' ? 'Mari mulai langkah pertama bersama.' : 'Siap mengenal '.$site['settings']['school_name'].' lebih dekat?' }}</h2>
         <p>{{ ($page ?? '') === 'home' ? 'Daftar secara online atau jadwalkan kunjungan ke sekolah.' : 'Hubungi kami atau mulai proses pendaftaran online.' }}</p></div>
         <div class="cta-actions"><a class="button" href="{{ \App\Services\LandingPreview::url('registration', 1) }}">Daftar Sekarang</a>
         @if(($page ?? '') === 'home')<a class="button outline" href="{{ \App\Services\LandingPreview::url('contact') }}#kunjungan">Jadwalkan Kunjungan</a>@endif</div>
@@ -46,9 +54,9 @@
     @endunless
 </main>
 <footer class="site-footer"><div class="container footer-inner">
-    <div class="footer-brand"><img src="{{ $site['settings']['logo'] }}" width="58" height="58" alt=""><div><strong>SD CERIA NUSANTARA</strong><p>{{ $site['settings']['tagline'] }}</p></div></div>
+    <div class="footer-brand"><img src="{{ $site['settings']['logo'] }}" width="58" height="58" alt=""><div><strong>{{ $site['settings']['school_name'] }}</strong><p>{{ $site['settings']['tagline'] }}</p></div></div>
     <div class="footer-contact"><p><a href="mailto:{{ $site['settings']['email'] }}">{{ $site['settings']['email'] }}</a> • <a href="https://wa.me/{{ preg_replace('/\D/', '', $site['settings']['whatsapp']) }}" target="_blank" rel="noopener">WA {{ $site['settings']['whatsapp'] }}</a></p><p>{{ $site['settings']['address'] }}</p><p>{{ $site['settings']['hours'] }}</p></div>
-    @if(($page ?? '') === 'home')<div class="footer-bottom"><span>© {{ date('Y') }} SD Ceria Nusantara. Hak cipta dilindungi.</span><span><a href="{{ \App\Services\LandingPreview::url('privacy') }}">Privasi</a> • <a href="{{ \App\Services\LandingPreview::url('terms') }}">Syarat & Ketentuan</a></span></div>@endif
+    @if(($page ?? '') === 'home')<div class="footer-bottom"><span>© {{ date('Y') }} {{ $site['settings']['school_name'] }}. Hak cipta dilindungi.</span><span><a href="{{ \App\Services\LandingPreview::url('privacy') }}">Privasi</a> • <a href="{{ \App\Services\LandingPreview::url('terms') }}">Syarat & Ketentuan</a></span></div>@endif
 </div></footer>
 <a class="whatsapp-float" data-whatsapp-float href="https://wa.me/{{ preg_replace('/\D/', '', $site['settings']['whatsapp']) }}" target="_blank" rel="noopener" aria-label="Tanya via WhatsApp" title="Tanya via WhatsApp">
     <img src="/landing-preview/assets/design/whatsapp.svg" alt="" width="38" height="38">

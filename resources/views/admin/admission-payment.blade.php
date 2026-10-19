@@ -3,7 +3,7 @@
 @if($record->value('payment_method') === 'transfer')
 @php($proofs = \App\Support\CloudData::table('school_documents')->where('record_id', $record->id)->get()->filter(fn ($doc) => in_array($doc->field ?? '', ['payment_proof', 'transfer_proof', 'bukti_transfer'])))
 @forelse($proofs as $proof)
-<p><a class="btn secondary" href="/admin/dokumen/{{ $proof->id }}">Unduh bukti transfer · {{ $proof->name }}</a></p>
+<p><a class="btn secondary" href="/admin/dokumen/{{ $proof->id }}?preview=1" target="_blank" rel="noopener"><x-icon name="eye"/> Pratinjau bukti transfer · {{ $proof->name }}</a></p>
 @empty
 <p class="muted">Bukti transfer belum tersedia dari pendaftaran.</p>
 @endforelse

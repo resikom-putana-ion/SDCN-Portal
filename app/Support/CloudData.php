@@ -42,12 +42,19 @@ class CloudData
             ->concat(collect(self::collection('applications'))->map(fn ($row) => self::applicant($row)));
         $rows = collect(self::collection($name))->map(fn ($row) => (object) $row);
         if ($name === 'school_documents') foreach (self::collection('applications') as $application) {
-            foreach ($application['documents'] ?? [] as $field => $file) $rows->push((object) [
+            $documents = $application['documents'] ?? [];
+            if (!isset($documents['payment_proof']) && is_array(data_get($application, 'payment.proof'))) {
+                $documents['payment_proof'] = $application['payment']['proof'];
+            }
+            foreach ($documents as $field => $file) {
+                if (!is_array($file) || empty($file['path'])) continue;
+                $rows->push((object) [
                 'id' => 'application-file-'.hash('sha256', $application['id'].'/'.$field),
                 'record_id' => $application['id'], 'field' => $field, 'path' => $file['path'], 'name' => $file['name'] ?? $field,
                 'mime' => $file['mime'] ?? 'application/octet-stream', 'size' => $file['size'] ?? 0,
                 'created_at' => $application['created_at'] ?? null,
             ]);
+            }
         }
         return $rows;
     }
@@ -71,6 +78,7 @@ class CloudData
                 'checks' => $extra['checks'] ?? [],
                 'payment_method' => AdmissionPayment::method($row),
                 'payment_method_label' => AdmissionPayment::label(AdmissionPayment::method($row)),
+                'payment_amount' => data_get($row, 'payment.amount'),
             ]),
         ]);
     }

@@ -20,6 +20,13 @@ class LandingPreview
         return str_starts_with($safe, '/assets/') ? '/landing-preview'.$safe : $safe;
     }
 
+    public static function validPhoto(string $path): bool
+    {
+        return WebsiteContent::image($path) !== ''
+            || (str_starts_with($path, '/landing-preview/') && WebsiteContent::image(substr($path, strlen('/landing-preview'))) !== '')
+            || (bool) preg_match('#^data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$#D', $path);
+    }
+
     public static function render(array $content, string $page, bool $editing = false)
     {
         abort_unless(isset(self::PAGES[$page]) || in_array($page, ['privacy','terms'], true), 404);

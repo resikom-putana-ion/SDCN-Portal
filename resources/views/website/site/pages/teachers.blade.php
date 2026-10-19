@@ -1,20 +1,22 @@
 @extends('website.site.layout')
-@section('title','Guru & Staf — SD Ceria Nusantara')
+@section('title', $site['teachers']['directory_title'].' — SD Ceria Nusantara')
 @section('content')
 @php
     $directory = $site['teachers'];
     $people = $directory['people'];
     $structure = $directory['structure'];
+    $head = $people[$structure['head']];
     $groupCounts = array_count_values(array_column($people, 'group'));
+    $gradeCount = count(array_filter($people, fn ($person) => str_starts_with(mb_strtolower($person['role']), 'wali kelas')));
 @endphp
 <section class="people-hero outer">
-    <div><p class="eyebrow">{{ $directory['directory_eyebrow'] }}</p><h1>{!! nl2br(e($directory['directory_title'])) !!}</h1><p>{{ $directory['directory_description'] }}</p><div class="people-hero-actions"><a class="button" href="#direktori">Berkenalan dengan tim ↗</a><a class="text-link" href="#struktur">Lihat struktur sekolah ↓</a></div><div class="people-facts"><span><strong>6</strong> jenjang kelas</span><span><strong>{{ count($people) }}</strong> {{ $directory['demo_profiles'] ? 'profil contoh' : 'anggota tim' }}</span><span><strong>1</strong> semangat mendampingi</span></div></div>
-    <div class="people-hero-photo"><x-landing-preview.staff-portrait :index="$people[$structure['head']]['portrait']" :name="$people[$structure['head']]['name']" :photo="$people[$structure['head']]['photo'] ?? null"/><div class="people-photo-note"><span aria-hidden="true">♡</span><div><strong>Setiap anak dikenal,</strong><br>setiap keluarga didengar.</div></div><span class="people-photo-badge">Bertumbuh bersama</span></div>
+    <div><p class="eyebrow">{{ $directory['directory_eyebrow'] }}</p><h1 style="white-space:pre-line">{{ $directory['directory_title'] }}</h1><p>{{ $directory['directory_description'] }}</p><div class="people-hero-actions"><a class="button" href="#direktori">Berkenalan dengan tim ↗</a><a class="text-link" href="#struktur">Lihat struktur sekolah ↓</a></div><div class="people-facts"><span><strong>{{ $gradeCount }}</strong> jenjang kelas</span><span><strong>{{ count($people) }}</strong> {{ $directory['demo_profiles'] ? 'profil contoh' : 'anggota tim' }}</span><span><strong>1</strong> semangat mendampingi</span></div></div>
+    <div class="people-hero-photo"><x-landing-preview.staff-portrait :index="$head['portrait']" :name="$head['name']" :photo="$head['photo']"/><div class="people-photo-note"><span aria-hidden="true">♡</span><div><strong>Setiap anak dikenal,</strong><br>setiap keluarga didengar.</div></div><span class="people-photo-badge">Bertumbuh bersama</span></div>
 </section>
-@if($directory['demo_profiles'])<div class="container people-demo-note"><span aria-hidden="true">ⓘ</span><p><strong>Contoh profil sekolah.</strong> Seluruh nama, foto, jabatan, dan pembagian tugas di halaman ini adalah data dummy. Susunan guru, layanan, dan mata pelajaran sebenarnya perlu dikonfirmasi kepada sekolah.</p></div>@endif
-<section class="section people-values"><div class="container"><x-landing-preview.heading eyebrow="LEBIH DARI MENGAJAR" title="Mendampingi dengan hati" subtitle="Kami ingin anak merasa aman, orang tua merasa tenang, dan komunikasi selalu terbuka."/><x-landing-preview.cards :items="$site['teachers']['values']"/></div></section>
+@if($directory['demo_profiles'])<div class="container people-demo-note"><span aria-hidden="true">ⓘ</span><p><strong>Contoh profil sekolah.</strong> Nama, foto, jabatan, dan pembagian tugas pada halaman ini ditandai sebagai data contoh.</p></div>@endif
+<section class="section people-values"><div class="container"><x-landing-preview.heading eyebrow="LEBIH DARI MENGAJAR" title="Mendampingi dengan hati" subtitle="Kami ingin anak merasa aman, orang tua merasa tenang, dan komunikasi selalu terbuka."/><x-landing-preview.cards :items="$directory['values']"/></div></section>
 <section class="section tinted" id="direktori"><div class="container">
-    <x-landing-preview.heading eyebrow="ORANG-ORANG DI BALIK CERITA ANAK" title="Mari berkenalan dengan tim" subtitle="Kenali peran setiap orang, agar Anda tahu siapa yang dapat membantu."/>
+    <x-landing-preview.heading :eyebrow="$directory['eyebrow']" :title="$directory['title']" :subtitle="$directory['description']"/>
     <div class="people-tools"><div class="people-filters" role="group" aria-label="Filter tim sekolah"><button type="button" class="is-active" data-team-filter="semua" aria-pressed="true">Semua tim <span>{{ count($people) }}</span></button><button type="button" data-team-filter="pimpinan" aria-pressed="false">Pimpinan <span>{{ $groupCounts['pimpinan'] ?? 0 }}</span></button><button type="button" data-team-filter="guru" aria-pressed="false">Guru <span>{{ $groupCounts['guru'] ?? 0 }}</span></button><button type="button" data-team-filter="staf" aria-pressed="false">Staf pendukung <span>{{ $groupCounts['staf'] ?? 0 }}</span></button></div><label class="people-search"><span>Cari nama atau peran</span><input type="search" data-team-search placeholder="Misalnya: wali kelas, UKS…" autocomplete="off"></label></div>
     <p class="people-results" data-team-count aria-live="polite">Menampilkan {{ count($people) }} anggota tim</p>
     <div class="people-grid">
@@ -25,7 +27,8 @@
 </div></section>
 <section class="section people-subjects" id="mata-pelajaran"><div class="container"><x-landing-preview.heading eyebrow="BELAJAR UTUH, BERTUMBUH BERSAMA" title="Siapa yang mendampingi pelajaran anak?" subtitle="Wali kelas mendampingi pelajaran inti, bekerja sama dengan guru bidang studi."/><div class="subject-grid">
 @foreach($directory['subjects'] as $subject)
-<article class="subject-card"><span class="subject-number" aria-hidden="true">{{ str_pad($loop->iteration,2,'0',STR_PAD_LEFT) }}</span><h3>{{ $subject['title'] }}</h3><p>{{ $subject['text'] }}</p><div>{{ $subject['by'] }}</div></article>
+
+<article class="subject-card"><span class="subject-number" aria-hidden="true">{{ str_pad($loop->iteration,2,'0',STR_PAD_LEFT) }}</span><h3>{{ $subject['title'] }}</h3><p>{{ $subject['text'] }}</p><div>{{ $subject['by'] ?? '' }}</div></article>
 @endforeach
 </div><p class="people-subject-note">Pembagian pelajaran menyesuaikan jenjang, kurikulum, dan program sekolah. Muatan lokal, pilihan seni, serta kegiatan pengayaan dapat berbeda pada setiap kelas.</p></div></section>
 <section class="section tinted people-organization" id="struktur"><div class="container"><x-landing-preview.heading eyebrow="SALING TERHUBUNG, SALING MENDUKUNG" title="Struktur keluarga sekolah" subtitle="Seluruh guru dan staf ditampilkan per orang agar peran setiap anggota tim mudah dikenali."/>
@@ -65,7 +68,7 @@
         </section>
         @endforeach
     </div>
-</div><p class="people-subject-note">Bagan contoh untuk memperjelas koordinasi internal. Setiap nama ditampilkan sebagai profil terpisah dan seluruh bidang tetap bekerja sama di bawah arahan kepala sekolah.</p>
+</div><p class="people-subject-note">Bagan ditampilkan mengikuti susunan organisasi yang dikelola sekolah.</p>
 </div></section>
 <section class="section"><div class="container people-help"><div><p class="eyebrow">KAMI SIAP MENDENGARKAN</p><h2>Butuh berbicara dengan tim yang tepat?</h2><p>Mulai dari pertanyaan belajar anak, administrasi, hingga rencana kunjungan. Tim tata usaha akan membantu menghubungkan Anda.</p></div><a class="button" href="{{ \App\Services\LandingPreview::url('contact') }}">Hubungi sekolah ↗</a></div></section>
 @endsection

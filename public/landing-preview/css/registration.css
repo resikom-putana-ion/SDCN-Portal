@@ -1274,6 +1274,65 @@
     color: #8b9ba4;
 }
 
+.page-registration .payment-choice>p {
+    color: #6d838e;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.page-registration .payment-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin: 10px 0;
+    padding: 14px;
+    border: 1px solid #dfe8eb;
+    border-radius: 12px;
+    background: #fbfdfd;
+    cursor: pointer;
+}
+
+.page-registration .payment-option input {
+    width: 17px;
+    min-height: 17px;
+    margin: 2px 0 0;
+    accent-color: #087da8;
+}
+
+.page-registration .payment-option strong,
+.page-registration .payment-option small {
+    display: block;
+}
+
+.page-registration .payment-option strong {
+    color: #234964;
+    font-size: 12px;
+}
+
+.page-registration .payment-option small {
+    margin-top: 4px;
+    color: #728b98;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.page-registration .payment-proof-panel {
+    margin: 14px 0;
+    padding: 15px;
+    border-radius: 12px;
+    background: #f4fafb;
+}
+
+.page-registration .payment-proof-panel[hidden] {
+    display: none;
+}
+
+.page-registration .payment-proof-panel>p {
+    color: #58748b;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
 @media (max-width: 640px) {
     .page-registration .registration-form .two-grid {
         gap: 17px;

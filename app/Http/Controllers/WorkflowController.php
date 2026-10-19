@@ -45,7 +45,7 @@ class WorkflowController extends Controller
                 throw ValidationException::withMessages(['payment_method' => 'Metode pembayaran belum tersedia dari pendaftaran. Lengkapi data sumber terlebih dahulu.']);
             }
             $data['method'] = $method === 'transfer' ? 'Transfer rekening' : ($method === 'offline' ? 'Tunai di sekolah' : '');
-            $complete = count(array_unique($data['checks'] ?? [])) === 4 && ! empty($data['paid']) && (int) $data['amount'] === (int) School::period()['fee'];
+            $complete = count(array_unique($data['checks'] ?? [])) === 4 && ! empty($data['paid']) && (int) $data['amount'] === (int) ($record->value('payment_amount') ?? School::period()['fee']);
             if ($data['action'] === 'activate' && ! $complete) {
                 throw ValidationException::withMessages(['checks' => 'Lengkapi pemeriksaan dokumen asli dan pembayaran sebelum aktivasi siswa.']);
             }
@@ -160,12 +160,14 @@ class WorkflowController extends Controller
         return PdfDocument::download('pdf.report', compact('record', 'grades'), 'Rapor-Arsip-'.$record->code.'.pdf');
     }
 
-    public function document(string $id, \App\Services\FirestoreFileStorage $files)
+    public function document(Request $request, string $id, \App\Services\FirestoreFileStorage $files)
     {
         $doc = DB::table('school_documents')->find($id);
         $file = $doc ? $files->get($doc->path) : null;
         abort_unless($file, 404);
-        return response()->streamDownload(static function () use ($file) { echo $file['contents']; }, \Illuminate\Support\Str::ascii(basename($doc->name)), ['Content-Type' => $file['content_type'], 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+        $preview = $request->boolean('preview');
+        abort_if($preview && !in_array($file['content_type'], ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']), 415, 'Format berkas tidak mendukung pratinjau.');
+        return response()->streamDownload(static function () use ($file) { echo $file['contents']; }, \Illuminate\Support\Str::ascii(basename($doc->name)), ['Content-Type' => $file['content_type'], 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff'], $preview ? 'inline' : 'attachment');
     }
 
     public function uploadDocument(Request $request, SchoolRecord $record, \App\Services\FirestoreFileStorage $files)
